@@ -1,54 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
     <link rel="stylesheet" type="text/css" href="style.css">
-	  <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-    <title>Ritvik's profile</title>
-  </head>
-  <body>
-    <nav>
-      <input type="checkbox" id="check">
-      <label for="check" class="checkbtn">
-        <i class="fas fa-bars"></i>
-      </label>
-      <label class="logo">RITVIK JOSHI</label>
-      <ul>
-        <li><a class="active" href="index.html">PROJECTS</a></li>
-        <li><a href="mission.html">MISSION</a></li>
-        <li><a href="contact.html">CONTACT</a></li>
-        <!-- <li><a href="#">Contato</a></li> -->
-      </ul>
-    </nav>
-    <div class="container">
-      
+
+</head>
+
+<body>
+	<header>
+		<div class="nav-wrapper">
+			<div class="logo-container">
+				<!-- <img class="logo" src="https://i.imgur.com/gea725J.png" alt="Logo"> -->
+                <h1 class="logo">Ritvik Joshi</h1>
+			</div>
+			<nav>
+				<input class="hidden" type="checkbox" id="menuToggle">
+				<label class="menu-btn" for="menuToggle">
+					<div class="menu"></div>
+					<div class="menu"></div>
+					<div class="menu"></div>
+				</label>
+				<div class="nav-container">
+					<ul class="nav-tabs">
+						<li class="nav-tab"><a class="links" href="index.html">Projects</a></li>
+						<li class="nav-tab"><a class="links" href="https://www.linkedin.com/in/ritvik-joshi-327508ba/">LinkedIn</a></li>
+						<li class="nav-tab"><a class="links" href="https://github.com/RitvikJoshi97/">GitHub</a></li>
+						<li class="nav-tab"><a class="links" href="mission.html">Mission</a></li>
+						<li class="nav-tab"><a class="links" href="contact.html">Contact</a></li>
+					</ul>
+				</div>
+			</nav>
+		</div>
+	</header>
 
 
-        <!-- <div class="header">
-            <h1>Hi</h1>
-        </div> -->
-        <div class="content">
-            <p>I've got like a few projects which I'm working on.</p>
-            <p>I'll post shortly about my latest projects - sorry for the delay</p>
-            <!-- <p>Check out my <a href="projects/nerf_gun.html">nerf gun</a> project.</p>  -->
-        </div>
-        <div class="footer">
-            <p>Under maintainance?</p>
-        </div>
-    </div>
-
-    <!-- <canvas id="bg"> -->
-      <!-- three.js scene will be rendered here -->
+  <div 
 
 
-    <!-- </canvas>
+	<div class="center">
+		<h1>Projects:</h1>
+    <ul> 
+      <li><a href="projects/nerf_gun.html">Nerf GUNSSSS</a></li>
+    </ul>
+	</div>
+</body>
 
-
-    <div id="app"></div> -->
-    <!-- <script type="module" src="/main.js"></script> -->
-    <link href="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/css/halfmoon-variables.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/js/halfmoon.min.js"></script>
-  </body>
 </html>
