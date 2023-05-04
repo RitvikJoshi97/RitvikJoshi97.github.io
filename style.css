@@ -16,9 +16,40 @@ h1 {
 	color: #111;
 }
 
-.center {
-	text-align: center;
+.content {
+	align-items: left;
+	text-align: left;
+	margin-left: 10%;
+	margin-right: 10%;
 }
+
+.content h1	{
+	color: #eee;
+}
+
+.content p {
+	color: #625c5c;
+}
+
+.content a {
+	color: #e7bcfe;
+	text-decoration: none;
+}
+/* 
+.about-project {
+	display: flex;
+	flex-direction: column;
+	align-items: left;
+	justify-content: center;
+	margin: 0 auto;
+	width: 100%;
+	max-width: 800px;
+	padding: 0 25px;
+}
+
+.about-project h1 {
+	color: #eee;
+} */
 
 .nav-wrapper {
 	display: flex;
@@ -174,3 +205,30 @@ h1 {
 		}
 	}
 }
+
+.content .progress {
+	background: rgba(255,255,255,0.1);
+	justify-content: flex-start;
+	border-radius: 100px;
+	align-items: center;
+	position: relative;
+	padding: 0 5px;
+	display: flex;
+	height: 40px;
+	width: 500px;
+  }
+  
+.content .progress-value {
+	align-self: center;
+	animation: nerf-progress 3s normal forwards;
+	box-shadow: 0 10px 40px -10px #fff;
+	border-radius: 100px;
+	background: #fff;
+	height: 30px;
+	width: 0;
+  }
+
+@keyframes nerf-progress {
+	0% { width: 0; }
+	100% { width: 30%; }
+  }
