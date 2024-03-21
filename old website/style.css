@@ -27,8 +27,16 @@ h1 {
 	color: #eee;
 }
 
+.content h2	{
+	color: #eee;
+}
+
+.content ul {
+	color: #eee;
+}
+
 .content p {
-	color: #625c5c;
+	color: #e7bcfe /* #625c5c; */
 }
 
 .content a {
@@ -230,5 +238,26 @@ h1 {
 
 @keyframes nerf-progress {
 	0% { width: 0; }
-	100% { width: 30%; }
+	100% { width: 90%; }
   }
+
+
+/* --- */
+
+.content .sm-progress-value {
+	align-self: center;
+	animation: sm-progress 3s normal forwards;
+	box-shadow: 0 10px 40px -10px #fff;
+	border-radius: 100px;
+	background: #fff;
+	height: 30px;
+	width: 0;
+  }
+
+@keyframes sm-progress {
+	0% { width: 0; }
+	100% { width: 100%; }
+  }
+
+/* --- */
+
