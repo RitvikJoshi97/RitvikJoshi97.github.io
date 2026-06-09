@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import {
   MapPin, Mail, Phone, Globe, ExternalLink, Linkedin,
@@ -29,6 +29,16 @@ const C = {
   forestBg:  '#E8F2EC',
   forestBg2: '#D4E8DB',
 }
+
+// ─── Dock constants ───────────────────────────────────────────────────────────
+const DOCK_BASE = 52
+const DOCK_MAX_SCALE = 1.65
+const DOCK_RADIUS = 130
+const DOCK_EXTRA_PAD = Math.ceil(DOCK_BASE * (DOCK_MAX_SCALE - 1)) + 8
+
+// ─── Hello constants ──────────────────────────────────────────────────────────
+const HELLOS = ['Hello.', 'Hola.', 'Bonjour.', 'Hallo.', 'Ciao.', 'こんにちは。', 'Hello.']
+const RAINBOW = 'linear-gradient(90deg, #bf5af2 0%, #0a84ff 20%, #30d158 40%, #ffd60a 60%, #ff9f0a 80%, #ff375f 100%)'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -280,37 +290,142 @@ function SectionLabel({ eyebrow, heading }: { eyebrow: string; heading: string }
 
 function Dock() {
   const items = [
-    { Icon: LayoutGrid, label: 'Projects',    href: '#projects' },
-    { Icon: Briefcase,  label: 'Experience',  href: '#experience' },
-    { Icon: Zap,        label: 'Skills',      href: '#skills' },
-    { Icon: GraduationCap, label: 'Education', href: '#education' },
+    { Icon: LayoutGrid,    label: 'Projects',   href: '#projects' },
+    { Icon: Briefcase,     label: 'Experience', href: '#experience' },
+    { Icon: Zap,           label: 'Skills',     href: '#skills' },
+    { Icon: GraduationCap, label: 'Education',  href: '#education' },
   ]
+
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null])
+  const [mouseX, setMouseX] = useState<number | null>(null)
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  function getScale(i: number): number {
+    if (mouseX === null) return 1
+    const el = itemRefs.current[i]
+    if (!el) return 1
+    const { left, width } = el.getBoundingClientRect()
+    const d = Math.abs(mouseX - (left + width / 2))
+    if (d >= DOCK_RADIUS) return 1
+    return 1 + (DOCK_MAX_SCALE - 1) * Math.cos((d / DOCK_RADIUS) * (Math.PI / 2))
+  }
+
+  const isHovering = mouseX !== null
+  const slotHeight = Math.ceil(DOCK_BASE * DOCK_MAX_SCALE)
+
   return (
     <div className="fixed bottom-6 inset-x-0 flex justify-center z-50 pointer-events-none">
       <nav
-        className="pointer-events-auto flex items-end gap-1 px-3 py-2.5 rounded-[24px] glass border shadow-xl"
-        style={{ borderColor: C.sep, boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}
+        className="pointer-events-auto flex items-end px-3 pb-3 rounded-[28px] glass border shadow-xl"
+        style={{
+          borderColor: C.sep,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
+          paddingTop: DOCK_EXTRA_PAD,
+          gap: 8,
+        }}
+        onMouseMove={e => setMouseX(e.clientX)}
+        onMouseLeave={() => { setMouseX(null); setHoveredIdx(null) }}
       >
-        {items.map(({ Icon, label, href }) => (
-          <a
-            key={label}
-            href={href}
-            className="dock-item flex flex-col items-center gap-1 px-4 py-2 rounded-2xl"
-            style={{ color: C.label2 }}
-            onMouseEnter={e => {
-              ;(e.currentTarget as HTMLElement).style.color = C.forest
-              ;(e.currentTarget as HTMLElement).style.background = C.forestBg
-            }}
-            onMouseLeave={e => {
-              ;(e.currentTarget as HTMLElement).style.color = C.label2
-              ;(e.currentTarget as HTMLElement).style.background = 'transparent'
-            }}
-          >
-            <Icon size={22} strokeWidth={1.75} />
-            <span className="text-[10px] font-medium">{label}</span>
-          </a>
-        ))}
+        {items.map(({ Icon, label, href }, i) => {
+          const scale = getScale(i)
+          const sz = Math.round(DOCK_BASE * scale)
+          const isHov = hoveredIdx === i
+          return (
+            <a
+              key={label}
+              href={href}
+              className="relative flex flex-col items-center justify-end"
+              style={{ height: slotHeight }}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              {/* Tooltip */}
+              <div
+                className="absolute left-1/2 pointer-events-none px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap"
+                style={{
+                  bottom: 'calc(100% + 8px)',
+                  transform: 'translateX(-50%)',
+                  background: C.surface,
+                  color: C.label,
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+                  border: `1px solid ${C.sep}`,
+                  opacity: isHov ? 1 : 0,
+                  transition: 'opacity 0.12s ease',
+                }}
+              >
+                {label}
+              </div>
+
+              {/* Icon box grows from bottom */}
+              <div
+                ref={el => { itemRefs.current[i] = el }}
+                className="flex items-center justify-center rounded-[18px]"
+                style={{
+                  width: sz,
+                  height: sz,
+                  background: isHov ? C.forestBg2 : C.forestBg,
+                  color: C.forest,
+                  transition: isHovering
+                    ? 'width 0.08s ease, height 0.08s ease, background 0.12s ease'
+                    : 'width 0.42s cubic-bezier(0.34,1.56,0.64,1), height 0.42s cubic-bezier(0.34,1.56,0.64,1), background 0.12s ease',
+                  boxShadow: isHov ? '0 4px 16px rgba(28,56,41,0.18)' : 'none',
+                }}
+              >
+                <Icon size={Math.round(24 * scale)} strokeWidth={1.75} />
+              </div>
+            </a>
+          )
+        })}
       </nav>
+    </div>
+  )
+}
+
+// ─── Hello Effect ─────────────────────────────────────────────────────────────
+
+function HelloEffect() {
+  const [idx, setIdx] = useState(0)
+  const [visible, setVisible] = useState(true)
+  const isDone = idx === HELLOS.length - 1
+
+  useEffect(() => {
+    if (isDone) return
+    const delay = idx === 0 ? 2800 : 380
+    const t = setTimeout(() => setVisible(false), delay)
+    return () => clearTimeout(t)
+  }, [idx, isDone])
+
+  useEffect(() => {
+    if (!visible && !isDone) {
+      const t = setTimeout(() => {
+        setIdx(i => i + 1)
+        setVisible(true)
+      }, 160)
+      return () => clearTimeout(t)
+    }
+  }, [visible, isDone])
+
+  return (
+    <div className="mb-5 select-none" style={{ lineHeight: 1 }}>
+      <span
+        key={idx}
+        className={idx === 0 ? 'hello-animate' : ''}
+        style={{
+          display: 'inline-block',
+          fontSize: 'clamp(3rem, 9vw, 5.5rem)',
+          fontFamily: 'var(--font-dancing)',
+          fontWeight: 700,
+          background: RAINBOW,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(-8px)',
+          transition: idx > 0 ? 'opacity 0.14s ease, transform 0.14s ease' : undefined,
+        }}
+      >
+        {HELLOS[idx]}
+      </span>
     </div>
   )
 }
@@ -320,6 +435,9 @@ function Dock() {
 function Hero() {
   return (
     <section className="flex flex-col items-center justify-center text-center px-5 pt-24 pb-36 min-h-screen">
+      {/* Hello */}
+      <HelloEffect />
+
       {/* Avatar */}
       <div className="float mb-7">
         <div
