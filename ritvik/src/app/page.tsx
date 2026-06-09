@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import {
-  FaPhone, FaEnvelope, FaLinkedin, FaGlobe, FaMapMarkerAlt,
-  FaExternalLinkAlt, FaApple,
-} from 'react-icons/fa'
+  MapPin, Mail, Phone, Globe, ExternalLink, Linkedin,
+  LayoutGrid, Briefcase, Zap, GraduationCap, ChevronDown, ChevronUp,
+} from 'lucide-react'
+import { FaApple } from 'react-icons/fa'
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,22 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Palette ──────────────────────────────────────────────────────────────────
+const C = {
+  bg:        '#F5F5F7',
+  surface:   '#FFFFFF',
+  surface2:  '#F2F2F7',
+  label:     '#1D1D1F',
+  label2:    '#6E6E73',
+  label3:    '#AEAEB2',
+  sep:       'rgba(60,60,67,0.10)',
+  forest:    '#1C3829',
+  forestMid: '#2D6A4F',
+  forestBg:  '#E8F2EC',
+  forestBg2: '#D4E8DB',
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Role = {
   title: string
@@ -42,7 +58,6 @@ type Project = {
   appStore?: string
   featured?: boolean
   emoji: string
-  accentClass: string
 }
 
 type Education = {
@@ -72,20 +87,20 @@ const experiences: Experience[] = [
         period: "Aug '23 — Present",
         highlight: '🏆 2025 CSKD Geo Award — Best Transformation & Innovation Deal',
         responsibilities: [
-          'Designed and developed an AI-powered automated log analysis system to diagnose software issues in products deployed globally. Built a React front-end with an AI pipeline using a custom-trained model and Agentic RAG system leveraging Pydantic, LangChain and Ollama — reducing triaging times from 2 weeks to minutes.',
-          'Contributed to a white-label airline app enabling agents to check in, board passengers, and manage luggage. Developed a natural language rule engine with Angular and .NET. Awarded the 2025 CSKD Geo award for Best Transformation & Innovation Deal.',
-          'Developed and deployed a white-label Cruise baggage handling and bag-tag printing ReactJS app with a custom CI/CD pipeline over distributed Kubernetes clusters.',
-          'Portfolio AI SPOC — internal AI consultant for 8 teams across Europe and Asia, delivering 10+ training courses. Led AI adoption through workshops, ideation sessions, and hands-on PoC development.',
+          'Designed and developed an AI-powered automated log analysis system to diagnose software issues across products deployed globally. Built a React front-end with an Agentic RAG pipeline (Pydantic, LangChain, Ollama) — reducing triaging times from 2 weeks to minutes.',
+          'Contributed to a white-label airline app enabling agents to check in, board passengers, and manage luggage. Developed a natural language rule engine with Angular and .NET — awarded the 2025 CSKD Geo award for Best Transformation & Innovation Deal.',
+          'Developed and deployed a white-label Cruise baggage handling and bag-tag printing ReactJS app with custom CI/CD over distributed Kubernetes clusters.',
+          'Portfolio AI SPOC — internal AI consultant for 8 teams across Europe and Asia, delivering 10+ training courses and leading hands-on PoC development.',
           'Led UI/UX and front-end development for a product re-certification portal in Figma with Angular, covering user, admin, and superuser interfaces.',
         ],
-        skills: ['React', 'Angular', '.NET', 'Azure', 'Kubernetes', 'Python', 'LangChain', 'Ollama', 'Pydantic', 'CI/CD', 'Figma'],
+        skills: ['React', 'Angular', '.NET', 'Azure', 'Kubernetes', 'Python', 'LangChain', 'Ollama', 'CI/CD', 'Figma'],
       },
       {
         title: 'Graduate Software Engineer',
         period: "Sept '22 — Aug '23",
         responsibilities: [
           'Designed and developed a full-stack application for a product-component repository, enabling post-deployment risk minimisation across all SITA products.',
-          'Built a C#-based API with SQL database and a React front-end with Azure AD authentication, complete with comprehensive documentation.',
+          'Built a C#-based API with SQL database and a React front-end with Azure AD authentication.',
         ],
         skills: ['C#', 'React', 'SQL', 'Azure AD', 'REST APIs'],
       },
@@ -159,7 +174,6 @@ const projects: Project[] = [
     url: 'https://fasterfoods.co.uk',
     featured: true,
     emoji: '🥗',
-    accentClass: 'emerald',
   },
   {
     name: 'Dance Helper',
@@ -171,18 +185,16 @@ const projects: Project[] = [
     tech: ['Swift', 'SwiftUI', 'Core Audio', 'Computer Vision', 'iOS'],
     appStore: 'https://apps.apple.com/dance-helper',
     emoji: '💃',
-    accentClass: 'pink',
   },
   {
     name: 'MCP Client for SMEs',
     tagline: 'TypeScript · Node.js · OpenAI',
     description: [
       'MCP client with automatic MongoDB config, real-time Socket.io, and OpenAI integration for dynamic tool orchestration.',
-      'RBAC with JWT & OAuth, granular permissions; deployed with 100+ users. Multi-transport (STDIO, HTTP, SSE) with failover.',
+      'RBAC with JWT & OAuth; deployed with 100+ users. Multi-transport (STDIO, HTTP, SSE) with failover.',
     ],
-    tech: ['TypeScript', 'Node.js', 'Express', 'MongoDB', 'OpenAI', 'Socket.io', 'JWT', 'Docker'],
+    tech: ['TypeScript', 'Node.js', 'Express', 'MongoDB', 'OpenAI', 'Socket.io', 'Docker'],
     emoji: '🤖',
-    accentClass: 'violet',
   },
 ]
 
@@ -223,33 +235,14 @@ const educationData: Education[] = [
   },
 ]
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const SKILL_COLORS: Record<string, string> = {
-  Python:       'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-  TypeScript:   'bg-blue-500/10 text-blue-300 border-blue-500/20',
-  JavaScript:   'bg-yellow-400/10 text-yellow-200 border-yellow-400/20',
-  'C#':         'bg-purple-500/10 text-purple-300 border-purple-500/20',
-  Go:           'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
-  Swift:        'bg-orange-500/10 text-orange-300 border-orange-500/20',
-  React:        'bg-cyan-400/10 text-cyan-200 border-cyan-400/20',
-  Angular:      'bg-red-500/10 text-red-300 border-red-500/20',
-  'Node.js':    'bg-green-500/10 text-green-300 border-green-500/20',
-  Docker:       'bg-blue-400/10 text-blue-200 border-blue-400/20',
-  AWS:          'bg-orange-400/10 text-orange-200 border-orange-400/20',
-  Azure:        'bg-blue-600/10 text-blue-300 border-blue-600/20',
-  Kubernetes:   'bg-blue-500/10 text-blue-200 border-blue-500/20',
-  PostgreSQL:   'bg-sky-500/10 text-sky-300 border-sky-500/20',
-  MongoDB:      'bg-green-400/10 text-green-200 border-green-400/20',
-  TensorFlow:   'bg-orange-500/10 text-orange-200 border-orange-500/20',
-  LangChain:    'bg-teal-500/10 text-teal-300 border-teal-500/20',
-  '.NET':       'bg-purple-400/10 text-purple-200 border-purple-400/20',
-}
+// ─── Micro components ─────────────────────────────────────────────────────────
 
 function Chip({ label }: { label: string }) {
-  const cls = SKILL_COLORS[label] ?? 'bg-slate-500/10 text-slate-300 border-slate-500/20'
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${cls}`}>
+    <span
+      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+      style={{ background: C.surface2, color: C.label2 }}
+    >
       {label}
     </span>
   )
@@ -257,10 +250,15 @@ function Chip({ label }: { label: string }) {
 
 function LiveDot() {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+      style={{ background: C.forestBg, color: C.forest }}
+    >
       <span className="relative flex h-1.5 w-1.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+          style={{ background: C.forest }} />
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5"
+          style={{ background: C.forest }} />
       </span>
       Current
     </span>
@@ -269,35 +267,51 @@ function LiveDot() {
 
 function SectionLabel({ eyebrow, heading }: { eyebrow: string; heading: string }) {
   return (
-    <div className="mb-12">
-      <p className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-2">{eyebrow}</p>
-      <h2 className="text-3xl sm:text-4xl font-black text-white">{heading}</h2>
+    <div className="mb-10">
+      <p className="text-xs font-bold tracking-widest uppercase mb-1.5"
+        style={{ color: C.forest }}>{eyebrow}</p>
+      <h2 className="text-2xl sm:text-3xl font-bold"
+        style={{ color: C.label }}>{heading}</h2>
     </div>
   )
 }
 
-// ─── Nav ─────────────────────────────────────────────────────────────────────
+// ─── Dock ─────────────────────────────────────────────────────────────────────
 
-function Nav() {
+function Dock() {
+  const items = [
+    { Icon: LayoutGrid, label: 'Projects',    href: '#projects' },
+    { Icon: Briefcase,  label: 'Experience',  href: '#experience' },
+    { Icon: Zap,        label: 'Skills',      href: '#skills' },
+    { Icon: GraduationCap, label: 'Education', href: '#education' },
+  ]
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 bg-[#060b14]/80 backdrop-blur-xl border-b border-white/5">
-      <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
-        <span className="text-lg font-black tracking-tight text-white">
-          RJ<span className="text-cyan-400">.</span>
-        </span>
-        <div className="hidden sm:flex gap-6 text-sm text-slate-400">
-          {['projects', 'experience', 'skills', 'education'].map(s => (
-            <a key={s} href={`#${s}`} className="hover:text-white transition-colors capitalize">{s}</a>
-          ))}
-        </div>
-        <a
-          href="mailto:ritvikjoshi97@gmail.com"
-          className="text-xs font-semibold px-4 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all"
-        >
-          Hire me
-        </a>
-      </div>
-    </nav>
+    <div className="fixed bottom-6 inset-x-0 flex justify-center z-50 pointer-events-none">
+      <nav
+        className="pointer-events-auto flex items-end gap-1 px-3 py-2.5 rounded-[24px] glass border shadow-xl"
+        style={{ borderColor: C.sep, boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}
+      >
+        {items.map(({ Icon, label, href }) => (
+          <a
+            key={label}
+            href={href}
+            className="dock-item flex flex-col items-center gap-1 px-4 py-2 rounded-2xl"
+            style={{ color: C.label2 }}
+            onMouseEnter={e => {
+              ;(e.currentTarget as HTMLElement).style.color = C.forest
+              ;(e.currentTarget as HTMLElement).style.background = C.forestBg
+            }}
+            onMouseLeave={e => {
+              ;(e.currentTarget as HTMLElement).style.color = C.label2
+              ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+            }}
+          >
+            <Icon size={22} strokeWidth={1.75} />
+            <span className="text-[10px] font-medium">{label}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
   )
 }
 
@@ -305,76 +319,103 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative min-h-screen flex flex-col justify-center px-5 pt-20 pb-16 overflow-hidden hero-grid">
-      <div className="pointer-events-none absolute -top-32 -left-40 w-[520px] h-[520px] rounded-full blur-3xl"
-        style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)' }} />
-      <div className="pointer-events-none absolute bottom-0 -right-40 w-[480px] h-[480px] rounded-full blur-3xl"
-        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)' }} />
-
-      <div className="relative max-w-5xl mx-auto w-full">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-12">
-          <div className="flex-1 min-w-0">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/25 bg-cyan-500/5 text-cyan-400 text-xs font-semibold mb-7 tracking-wide uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-              AI &amp; Full-Stack Engineer · London
-            </div>
-
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black leading-none mb-5 tracking-tight">
-              <span className="text-white">Ritvik</span>{' '}
-              <span className="gradient-text">Joshi</span>
-            </h1>
-
-            <p className="text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-10">
-              I build intelligent systems and production-grade applications —
-              from{' '}
-              <span className="text-slate-200 font-medium">Agentic RAG pipelines</span>{' '}
-              at SITA Aero to a{' '}
-              <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-                className="text-emerald-400 font-medium hover:underline">
-                self-hosted health platform
-              </a>{' '}
-              running 24/7 on a Raspberry Pi.
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-              <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-400 hover:bg-cyan-500/20 transition-all text-sm font-semibold">
-                <FaLinkedin /> LinkedIn
-              </a>
-              <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 transition-all text-sm font-semibold">
-                <FaGlobe /> FasterFoods
-              </a>
-              <a href="mailto:ritvikjoshi97@gmail.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-700/40 border border-white/8 text-slate-300 hover:bg-slate-700/60 transition-all text-sm font-semibold">
-                <FaEnvelope /> Email
-              </a>
-            </div>
-
-            <div className="flex flex-wrap gap-5 mt-8 text-slate-500 text-sm">
-              <span className="flex items-center gap-1.5"><FaMapMarkerAlt className="text-cyan-600" /> London, UK</span>
-              <span className="flex items-center gap-1.5"><FaPhone className="text-cyan-600" /> +44 (0)7760 917811</span>
-            </div>
-          </div>
-
-          <div className="flex-shrink-0 float">
-            <div className="w-44 h-44 lg:w-52 lg:h-52 rounded-2xl p-0.5"
-              style={{ background: 'linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6)' }}>
-              <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-900">
-                <Image
-                  src="https://media.licdn.com/dms/image/v2/D4E03AQGW9SJLrJNrTA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1674829941272?e=1738195200&v=beta&t=PcPHAzCLVwmvO490T4dyZx_Q4bkY-CVQ59OwCusht_4"
-                  alt="Ritvik Joshi" width={208} height={208}
-                  className="object-cover w-full h-full" unoptimized
-                />
-              </div>
-            </div>
-          </div>
+    <section className="flex flex-col items-center justify-center text-center px-5 pt-24 pb-36 min-h-screen">
+      {/* Avatar */}
+      <div className="float mb-7">
+        <div
+          className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden"
+          style={{
+            boxShadow: `0 0 0 4px #fff, 0 8px 40px rgba(28,56,41,0.15)`,
+          }}
+        >
+          <Image
+            src="https://media.licdn.com/dms/image/v2/D4E03AQGW9SJLrJNrTA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1674829941272?e=1738195200&v=beta&t=PcPHAzCLVwmvO490T4dyZx_Q4bkY-CVQ59OwCusht_4"
+            alt="Ritvik Joshi"
+            width={128} height={128}
+            className="object-cover w-full h-full"
+            unoptimized
+          />
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-slate-600 text-xs select-none">
-        <span>scroll</span>
-        <div className="w-px h-8 bg-gradient-to-b from-slate-600 to-transparent" />
+      {/* Name */}
+      <h1
+        className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-none mb-4"
+        style={{ color: C.label }}
+      >
+        Ritvik{' '}
+        <span className="gradient-text">Joshi</span>
+      </h1>
+
+      {/* Role badge */}
+      <div
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-3"
+        style={{ background: C.forestBg, color: C.forest }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full animate-pulse"
+          style={{ background: C.forest }} />
+        AI &amp; Full-Stack Engineer
+      </div>
+
+      {/* Location */}
+      <p className="flex items-center justify-center gap-1.5 text-sm mb-6"
+        style={{ color: C.label3 }}>
+        <MapPin size={13} style={{ color: C.forest }} />
+        London, UK
+      </p>
+
+      {/* Bio */}
+      <p className="text-base max-w-md leading-relaxed mb-8" style={{ color: C.label2 }}>
+        Building intelligent systems at SITA Aero and running{' '}
+        <a
+          href="https://fasterfoods.co.uk"
+          target="_blank" rel="noopener noreferrer"
+          className="font-semibold hover:underline"
+          style={{ color: C.forest }}
+        >
+          FasterFoods
+        </a>
+        {' '}— a self-hosted health tracker running 24/7 on a Raspberry Pi.
+      </p>
+
+      {/* CTA buttons */}
+      <div className="flex flex-wrap gap-3 justify-center mb-6">
+        <a
+          href="https://linkedin.com/in/ritvik-joshi-327508ba"
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ background: C.forest }}
+        >
+          <Linkedin size={15} /> LinkedIn
+        </a>
+        <a
+          href="https://fasterfoods.co.uk"
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors"
+          style={{ background: C.forestBg, color: C.forest }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = C.forestBg2}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = C.forestBg}
+        >
+          <Globe size={15} /> FasterFoods
+        </a>
+        <a
+          href="mailto:ritvikjoshi97@gmail.com"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border transition-colors hover:bg-black/4"
+          style={{
+            background: C.surface,
+            color: C.label2,
+            borderColor: C.sep,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          }}
+        >
+          <Mail size={15} /> Email
+        </a>
+      </div>
+
+      {/* Contact details */}
+      <div className="flex flex-wrap gap-5 justify-center text-xs" style={{ color: C.label3 }}>
+        <span className="flex items-center gap-1.5"><Phone size={11} /> +44 (0)7760 917811</span>
+        <span className="flex items-center gap-1.5"><Mail size={11} /> ritvikjoshi97@gmail.com</span>
       </div>
     </section>
   )
@@ -384,8 +425,8 @@ function Hero() {
 
 function ProjectsSection() {
   return (
-    <section id="projects" className="py-24 px-5">
-      <div className="max-w-5xl mx-auto">
+    <section id="projects" className="py-20 px-5 pb-8">
+      <div className="max-w-4xl mx-auto">
         <SectionLabel eyebrow="What I've built" heading="Projects" />
         <div className="space-y-4">
           <FeaturedProject project={projects[0]} />
@@ -400,36 +441,64 @@ function ProjectsSection() {
 
 function FeaturedProject({ project }: { project: Project }) {
   return (
-    <div className="group relative rounded-2xl border border-white/5 featured-glow hover:border-emerald-500/20 transition-all duration-300 overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #0d1f15 0%, #0a1a10 100%)' }}>
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at top right, rgba(16,185,129,0.07) 0%, transparent 60%)' }} />
-      <div className="relative p-8 lg:p-10 grid lg:grid-cols-5 gap-10 items-center">
+    <div
+      className="bg-white rounded-3xl overflow-hidden card-lift"
+      style={{
+        boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
+        border: `1px solid ${C.sep}`,
+      }}
+    >
+      {/* Top accent stripe */}
+      <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${C.forest}, ${C.forestMid})` }} />
+
+      <div className="p-7 lg:p-9 grid lg:grid-cols-5 gap-8 items-start">
+        {/* Left */}
         <div className="lg:col-span-3">
-          <div className="flex items-center gap-3 mb-5">
-            <span className="text-4xl">{project.emoji}</span>
+          <div className="flex items-center gap-3.5 mb-5">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{ background: C.forestBg }}
+            >
+              {project.emoji}
+            </div>
             <div>
-              <h3 className="text-2xl font-black text-white leading-tight">{project.name}</h3>
-              <p className="text-emerald-400 text-sm font-semibold">{project.tagline}</p>
+              <h3 className="text-xl font-bold" style={{ color: C.label }}>{project.name}</h3>
+              <p className="text-sm font-medium" style={{ color: C.forest }}>{project.tagline}</p>
             </div>
           </div>
-          <ul className="space-y-2 mb-7">
+
+          <ul className="space-y-2.5 mb-7">
             {project.description.map((d, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-slate-400 text-sm leading-relaxed">
-                <span className="text-emerald-500 mt-1 flex-shrink-0 text-xs">▸</span>{d}
+              <li key={i} className="flex gap-3 text-sm leading-relaxed" style={{ color: C.label2 }}>
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: C.forestMid }} />
+                {d}
               </li>
             ))}
           </ul>
+
           {project.url && (
-            <a href={project.url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 transition-all text-sm font-semibold">
-              <FaGlobe className="text-sm" />fasterfoods.co.uk<FaExternalLinkAlt className="text-xs" />
+            <a
+              href={project.url}
+              target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+              style={{ background: C.forestBg, color: C.forest }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = C.forestBg2}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = C.forestBg}
+            >
+              <Globe size={13} />
+              fasterfoods.co.uk
+              <ExternalLink size={11} />
             </a>
           )}
         </div>
+
+        {/* Right: stack */}
         <div className="lg:col-span-2">
-          <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-3 font-semibold">Stack</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: C.label3 }}>
+            Stack
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {project.tech.map(t => <Chip key={t} label={t} />)}
           </div>
         </div>
@@ -439,46 +508,43 @@ function FeaturedProject({ project }: { project: Project }) {
 }
 
 function SmallProjectCard({ project }: { project: Project }) {
-  const bgMap: Record<string, string> = {
-    pink:   'linear-gradient(135deg, #1a0d14 0%, #130a10 100%)',
-    violet: 'linear-gradient(135deg, #12091a 0%, #0d0715 100%)',
-  }
-  const borderMap: Record<string, string> = {
-    pink:   'hover:border-pink-500/25',
-    violet: 'hover:border-violet-500/25',
-  }
-  const iconMap: Record<string, string> = {
-    pink:   'linear-gradient(135deg, #ec4899, #f43f5e)',
-    violet: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-  }
   return (
-    <div className={`group relative rounded-2xl border border-white/5 card-glow ${borderMap[project.accentClass] ?? 'hover:border-white/10'} transition-all duration-300 p-6 flex flex-col`}
-      style={{ background: bgMap[project.accentClass] ?? '#0d1626' }}>
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl mb-4 shadow-lg"
-        style={{ background: iconMap[project.accentClass] ?? '#334155' }}>
+    <div
+      className="bg-white rounded-3xl p-6 flex flex-col card-lift"
+      style={{
+        boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+        border: `1px solid ${C.sep}`,
+      }}
+    >
+      <div
+        className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4 flex-shrink-0"
+        style={{ background: C.forestBg }}
+      >
         {project.emoji}
       </div>
-      <h3 className="text-base font-bold text-white mb-0.5">{project.name}</h3>
-      <p className="text-xs font-semibold text-slate-400 mb-3">{project.tagline}</p>
+      <h3 className="text-base font-bold mb-0.5" style={{ color: C.label }}>{project.name}</h3>
+      <p className="text-xs font-semibold mb-3" style={{ color: C.forest }}>{project.tagline}</p>
       <ul className="space-y-1.5 mb-5 flex-1">
         {project.description.map((d, i) => (
-          <li key={i} className="text-slate-500 text-sm leading-relaxed">{d}</li>
+          <li key={i} className="text-sm leading-relaxed" style={{ color: C.label2 }}>{d}</li>
         ))}
       </ul>
-      <div className="flex flex-wrap gap-1.5 mb-4">
+      <div className="flex flex-wrap gap-1.5 mb-5">
         {project.tech.slice(0, 5).map(t => <Chip key={t} label={t} />)}
       </div>
       <div className="flex gap-4">
         {project.url && (
           <a href={project.url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-cyan-400 transition-colors font-medium">
-            <FaGlobe /> Website
+            className="flex items-center gap-1.5 text-xs font-semibold transition-colors hover:opacity-70"
+            style={{ color: C.forest }}>
+            <Globe size={12} /> Website
           </a>
         )}
         {project.appStore && (
           <a href={project.appStore} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-cyan-400 transition-colors font-medium">
-            <FaApple /> App Store
+            className="flex items-center gap-1.5 text-xs font-semibold transition-colors hover:opacity-70"
+            style={{ color: C.forest }}>
+            <FaApple size={12} /> App Store
           </a>
         )}
       </div>
@@ -490,15 +556,11 @@ function SmallProjectCard({ project }: { project: Project }) {
 
 function ExperienceSection() {
   return (
-    <section id="experience" className="py-24 px-5">
-      <div className="max-w-5xl mx-auto">
+    <section id="experience" className="py-20 px-5">
+      <div className="max-w-4xl mx-auto">
         <SectionLabel eyebrow="Career" heading="Experience" />
-        <div className="relative">
-          <div className="absolute left-6 top-2 bottom-2 w-px hidden sm:block"
-            style={{ background: 'linear-gradient(to bottom, rgba(6,182,212,0.4), rgba(139,92,246,0.2), transparent)' }} />
-          <div className="space-y-8">
-            {experiences.map((exp, i) => <ExpCard key={i} exp={exp} />)}
-          </div>
+        <div className="space-y-4">
+          {experiences.map((exp, i) => <ExpCard key={i} exp={exp} />)}
         </div>
       </div>
     </section>
@@ -510,69 +572,91 @@ function ExpCard({ exp }: { exp: Experience }) {
   const totalBullets = exp.roles.reduce((n, r) => n + r.responsibilities.length, 0)
 
   return (
-    <div className="relative sm:pl-16">
-      <div className="absolute left-[17px] top-6 w-4 h-4 rounded-full border-2 border-cyan-500/40 bg-[#060b14] hidden sm:flex items-center justify-center">
-        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-      </div>
-
-      <div className="rounded-2xl border border-white/5 card-glow hover:border-white/10 transition-all duration-300"
-        style={{ background: 'rgba(13,22,38,0.6)' }}>
-        <div className="p-6">
-          <div className="flex items-start gap-4 mb-5">
-            <Image src={exp.logo} alt={exp.company} width={44} height={44}
-              className="rounded-xl object-cover flex-shrink-0" unoptimized />
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                <h3 className="text-lg font-black text-white">{exp.company}</h3>
-                {exp.isCurrent && <LiveDot />}
-                {exp.linkedIn && (
-                  <a href={exp.linkedIn} target="_blank" rel="noopener noreferrer"
-                    className="text-slate-600 hover:text-slate-300 transition-colors">
-                    <FaExternalLinkAlt className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-              <p className="text-slate-500 text-sm">{exp.location}</p>
+    <div
+      className="bg-white rounded-3xl overflow-hidden card-lift"
+      style={{
+        boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+        border: `1px solid ${C.sep}`,
+      }}
+    >
+      <div className="p-6">
+        {/* Company header */}
+        <div className="flex items-start gap-4 mb-5">
+          <Image
+            src={exp.logo} alt={exp.company}
+            width={44} height={44}
+            className="rounded-2xl object-cover flex-shrink-0"
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            unoptimized
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-0.5">
+              <h3 className="text-base font-bold" style={{ color: C.label }}>{exp.company}</h3>
+              {exp.isCurrent && <LiveDot />}
+              {exp.linkedIn && (
+                <a href={exp.linkedIn} target="_blank" rel="noopener noreferrer"
+                  className="transition-colors hover:opacity-60" style={{ color: C.label3 }}>
+                  <ExternalLink size={12} />
+                </a>
+              )}
             </div>
+            <p className="text-sm" style={{ color: C.label3 }}>{exp.location}</p>
           </div>
-
-          <div className="space-y-5">
-            {exp.roles.map((role, ri) => {
-              if (ri > 0 && !open) return null
-              return (
-                <div key={ri} className={ri > 0 ? 'border-t border-white/5 pt-5' : ''}>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="font-semibold text-slate-200 text-sm">{role.title}</p>
-                    <span className="font-mono text-xs text-slate-600 flex-shrink-0">{role.period}</span>
-                  </div>
-                  {role.highlight && (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-yellow-500/20 text-yellow-400 text-xs font-semibold mb-3"
-                      style={{ background: 'rgba(234,179,8,0.08)' }}>
-                      {role.highlight}
-                    </div>
-                  )}
-                  <ul className="space-y-2 mb-3">
-                    {(open || ri === 0 ? role.responsibilities : role.responsibilities.slice(0, 2)).map((r, i) => (
-                      <li key={i} className="flex items-start gap-2 text-slate-400 text-sm leading-relaxed">
-                        <span className="text-cyan-600 mt-1 flex-shrink-0 text-[10px]">▸</span>{r}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="flex flex-wrap gap-1.5">
-                    {role.skills.map(s => <Chip key={s} label={s} />)}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {totalBullets > 2 && (
-            <button onClick={() => setOpen(!open)}
-              className="mt-4 text-xs font-semibold text-cyan-500 hover:text-cyan-300 transition-colors">
-              {open ? 'Show less ↑' : 'Show more ↓'}
-            </button>
-          )}
         </div>
+
+        {/* Roles */}
+        <div className="space-y-5">
+          {exp.roles.map((role, ri) => {
+            if (ri > 0 && !open) return null
+            return (
+              <div key={ri}
+                className={ri > 0 ? 'pt-5' : ''}
+                style={ri > 0 ? { borderTop: `1px solid ${C.sep}` } : {}}>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <p className="text-sm font-semibold" style={{ color: C.label }}>{role.title}</p>
+                  <span className="text-xs font-mono flex-shrink-0" style={{ color: C.label3 }}>{role.period}</span>
+                </div>
+
+                {role.highlight && (
+                  <div
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold mb-3"
+                    style={{
+                      background: '#FFFBEB',
+                      border: '1px solid rgba(217,119,6,0.2)',
+                      color: '#B45309',
+                    }}
+                  >
+                    {role.highlight}
+                  </div>
+                )}
+
+                <ul className="space-y-2 mb-3">
+                  {(open || ri === 0 ? role.responsibilities : role.responsibilities.slice(0, 2)).map((r, i) => (
+                    <li key={i} className="flex gap-2.5 text-sm leading-relaxed" style={{ color: C.label2 }}>
+                      <span className="mt-2 w-1 h-1 rounded-full flex-shrink-0"
+                        style={{ background: C.forestMid }} />
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {role.skills.map(s => <Chip key={s} label={s} />)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {totalBullets > 2 && (
+          <button
+            onClick={() => setOpen(!open)}
+            className="mt-4 flex items-center gap-1 text-xs font-semibold transition-opacity hover:opacity-70"
+            style={{ color: C.forest }}
+          >
+            {open ? <><ChevronUp size={14} /> Show less</> : <><ChevronDown size={14} /> Show more</>}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -582,14 +666,21 @@ function ExpCard({ exp }: { exp: Experience }) {
 
 function SkillsSection() {
   return (
-    <section id="skills" className="py-24 px-5">
-      <div className="max-w-5xl mx-auto">
+    <section id="skills" className="py-20 px-5">
+      <div className="max-w-4xl mx-auto">
         <SectionLabel eyebrow="Expertise" heading="Tech Stack" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {skillCategories.map(cat => (
-            <div key={cat.name} className="rounded-2xl border border-white/5 p-5"
-              style={{ background: 'rgba(13,22,38,0.5)' }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3">{cat.name}</p>
+            <div
+              key={cat.name}
+              className="bg-white rounded-3xl p-5 card-lift"
+              style={{
+                boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                border: `1px solid ${C.sep}`,
+              }}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-3"
+                style={{ color: C.forest }}>{cat.name}</p>
               <div className="flex flex-wrap gap-1.5">
                 {cat.skills.map(s => <Chip key={s} label={s} />)}
               </div>
@@ -605,8 +696,8 @@ function SkillsSection() {
 
 function EducationSection() {
   return (
-    <section id="education" className="py-24 px-5">
-      <div className="max-w-5xl mx-auto">
+    <section id="education" className="py-20 px-5 pb-32">
+      <div className="max-w-4xl mx-auto">
         <SectionLabel eyebrow="Academic" heading="Education" />
         <div className="space-y-4">
           {educationData.map((edu, i) => <EduCard key={i} education={edu} />)}
@@ -620,53 +711,76 @@ function EduCard({ education }: { education: Education }) {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
-    <div className="rounded-2xl border border-white/5 card-glow hover:border-white/10 transition-all duration-300 p-6"
-      style={{ background: 'rgba(13,22,38,0.5)' }}>
+    <div
+      className="bg-white rounded-3xl p-6 card-lift"
+      style={{
+        boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+        border: `1px solid ${C.sep}`,
+      }}
+    >
       <div className="flex items-start gap-4">
-        <Image src={education.logo} alt={education.institution} width={44} height={44}
-          className="rounded-xl object-cover flex-shrink-0" unoptimized />
+        <Image
+          src={education.logo} alt={education.institution}
+          width={44} height={44}
+          className="rounded-2xl object-cover flex-shrink-0"
+          style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+          unoptimized
+        />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-0.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-black text-white text-base">{education.institution}</h3>
+              <h3 className="text-base font-bold" style={{ color: C.label }}>{education.institution}</h3>
               {education.website && (
                 <a href={education.website} target="_blank" rel="noopener noreferrer"
-                  className="text-slate-600 hover:text-slate-300 transition-colors">
-                  <FaExternalLinkAlt className="w-3 h-3" />
+                  className="hover:opacity-60 transition-opacity" style={{ color: C.label3 }}>
+                  <ExternalLink size={12} />
                 </a>
               )}
             </div>
-            <span className="font-mono text-xs text-slate-600 flex-shrink-0">{education.period}</span>
+            <span className="font-mono text-xs flex-shrink-0" style={{ color: C.label3 }}>{education.period}</span>
           </div>
-          <p className="text-slate-300 text-sm font-semibold mb-1">{education.degree}</p>
-          <p className="text-slate-500 text-sm mb-2">{education.location}</p>
+
+          <p className="text-sm font-semibold mb-1" style={{ color: C.label2 }}>{education.degree}</p>
+          <p className="text-xs mb-2" style={{ color: C.label3 }}>{education.location}</p>
+
           {education.grade && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+              style={{ background: C.forestBg, color: C.forest }}
+            >
               {education.grade}
             </span>
           )}
+
           {education.details.length > 0 && (
             <ul className="mt-3 space-y-1.5">
               {education.details.map((d, i) => (
-                <li key={i} className="flex items-start gap-2 text-slate-500 text-sm leading-relaxed">
-                  <span className="text-cyan-700 mt-0.5 flex-shrink-0 text-[10px]">▸</span>{d}
+                <li key={i} className="flex gap-2.5 text-sm leading-relaxed" style={{ color: C.label2 }}>
+                  <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0"
+                    style={{ background: C.forestMid }} />
+                  {d}
                 </li>
               ))}
             </ul>
           )}
+
           {education.showSaccades && (
             <>
-              <button onClick={() => setDialogOpen(true)}
-                className="mt-3 text-xs font-semibold text-cyan-500 hover:text-cyan-300 transition-colors">
+              <button
+                onClick={() => setDialogOpen(true)}
+                className="mt-3 text-xs font-semibold hover:opacity-70 transition-opacity"
+                style={{ color: C.forest }}
+              >
                 Demo dissertation →
               </button>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-xl"
-                  style={{ background: '#0d1626', borderColor: 'rgba(255,255,255,0.1)', color: '#e2e8f0' }}>
+                <DialogContent className="max-w-xl rounded-3xl bg-white border-black/5">
                   <DialogHeader>
-                    <DialogTitle style={{ color: '#fff' }}>Understanding Saccades</DialogTitle>
+                    <DialogTitle className="text-lg font-bold" style={{ color: C.label }}>
+                      Understanding Saccades
+                    </DialogTitle>
                     <DialogDescription className="pt-3 space-y-3 text-sm leading-relaxed"
-                      style={{ color: '#94a3b8' }}>
+                      style={{ color: C.label2 }}>
                       <p>
                         Saccades are rapid, ballistic movements of the eyes that abruptly change the
                         point of fixation. They range from small movements made while reading to
@@ -677,7 +791,7 @@ function EduCard({ education }: { education: Education }) {
                         specific areas of interest — crucial for understanding visual perception,
                         attention mechanisms, and neurological conditions.
                       </p>
-                      <p style={{ color: '#cbd5e1' }}>
+                      <p className="font-medium" style={{ color: C.label }}>
                         My dissertation focused on analysing saccadic movements using a low-cost
                         single-camera infrared setup.
                       </p>
@@ -697,17 +811,13 @@ function EduCard({ education }: { education: Education }) {
 
 function Footer() {
   return (
-    <footer className="py-10 px-5 border-t border-white/5">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-600">
-        <span>© {new Date().getFullYear()} Ritvik Joshi</span>
-        <div className="flex gap-6">
-          <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer"
-            className="hover:text-slate-300 transition-colors">LinkedIn</a>
-          <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-            className="hover:text-slate-300 transition-colors">FasterFoods</a>
-          <a href="mailto:ritvikjoshi97@gmail.com" className="hover:text-slate-300 transition-colors">Email</a>
-        </div>
-      </div>
+    <footer
+      className="py-8 px-5 text-center text-xs"
+      style={{ color: C.label3, borderTop: `1px solid ${C.sep}` }}
+    >
+      © {new Date().getFullYear()} Ritvik Joshi &nbsp;·&nbsp;
+      <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
+        className="hover:underline" style={{ color: C.forest }}>fasterfoods.co.uk</a>
     </footer>
   )
 }
@@ -716,8 +826,8 @@ function Footer() {
 
 export default function RitvikPage() {
   return (
-    <div className="min-h-screen bg-[#060b14] text-slate-100">
-      <Nav />
+    <div className="min-h-screen" style={{ background: C.bg, color: C.label }}>
+      <Dock />
       <Hero />
       <ProjectsSection />
       <ExperienceSection />
