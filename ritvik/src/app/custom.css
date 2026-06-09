@@ -60,3 +60,13 @@ body {
   50%       { transform: translateY(-7px); }
 }
 .float { animation: float 5s ease-in-out infinite; }
+
+/* Apple Hello draw animation — reveals text left-to-right */
+@keyframes hello-draw {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+.hello-animate {
+  clip-path: inset(0 100% 0 0);
+  animation: hello-draw 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
