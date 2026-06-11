@@ -22,8 +22,9 @@ const dancing = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "Ritvik's Portfolio",
-  description: "Ritvik's Portfolio",
+  title: "Ritvik Joshi — AI & Full-Stack Engineer",
+  description:
+    "AI & full-stack engineer in London. Building AI systems for aviation at SITA, FasterFoods after hours, and running ultramarathons in between. Come play with the demos.",
 };
 
 export default function RootLayout({

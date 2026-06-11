@@ -61,6 +61,44 @@ body {
 }
 .float { animation: float 5s ease-in-out infinite; }
 
+/* Demo panel slide-in */
+@keyframes demo-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.demo-enter { animation: demo-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Log lines appear */
+@keyframes log-line {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.log-line { animation: log-line 0.2s ease-out; }
+
+/* 3D-print layer pop */
+@keyframes layer-pop {
+  from { opacity: 0; transform: scaleX(0.6); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+.layer-pop { animation: layer-pop 0.16s ease-out; }
+
+/* Health-loop detail panel crossfade */
+@keyframes loop-detail {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.loop-detail { animation: loop-detail 0.3s ease-out; }
+
+/* Violin string wiggle */
+@keyframes string-wiggle {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(2.5px); }
+  40% { transform: translateX(-2px); }
+  60% { transform: translateX(1.5px); }
+  80% { transform: translateX(-1px); }
+}
+.string-wiggle { animation: string-wiggle 0.25s linear 3; }
+
 /* Apple Hello draw animation — reveals text left-to-right */
 @keyframes hello-draw {
   from { clip-path: inset(0 100% 0 0); }
