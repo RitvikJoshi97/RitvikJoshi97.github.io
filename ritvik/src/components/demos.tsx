@@ -137,8 +137,8 @@ export function LogTriageDemo() {
         style={{ background: '#1A1A1C', color: '#E5E5EA' }}>
         {phase === 'idle' && (
           <p style={{ color: '#8e8e93' }}>
-            // A kiosk at Heathrow just failed. Press “Ingest logs” —<br />
-            // this is roughly what my pipeline does, minus two weeks of waiting.
+            {'// A kiosk at Heathrow just failed. Press “Ingest logs” —'}<br />
+            {'// this is roughly what my pipeline does, minus two weeks of waiting.'}
           </p>
         )}
         {TRIAGE_LOGS.slice(0, lines).map((l, i) => (
