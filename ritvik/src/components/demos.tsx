@@ -6,25 +6,12 @@ import {
   ShoppingCart, Archive, UtensilsCrossed, Dumbbell, Moon,
   Waves, Bike, Footprints,
 } from 'lucide-react'
-
-const C = {
-  bg:        '#F5F5F7',
-  surface:   '#FFFFFF',
-  surface2:  '#F2F2F7',
-  label:     '#1D1D1F',
-  label2:    '#6E6E73',
-  label3:    '#AEAEB2',
-  sep:       'rgba(60,60,67,0.10)',
-  forest:    '#1C3829',
-  forestMid: '#2D6A4F',
-  forestBg:  '#E8F2EC',
-  forestBg2: '#D4E8DB',
-}
+import { C } from '@/lib/palette'
 
 // ─── Reveal on scroll ─────────────────────────────────────────────────────────
 
-export function Reveal({ children, delay = 0, className = '' }: {
-  children: React.ReactNode; delay?: number; className?: string
+export function Reveal({ children, delay = 0, className = '', style }: {
+  children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [shown, setShown] = useState(false)
@@ -45,6 +32,7 @@ export function Reveal({ children, delay = 0, className = '' }: {
       ref={ref}
       className={className}
       style={{
+        ...style,
         opacity: shown ? 1 : 0,
         transform: shown ? 'translateY(0)' : 'translateY(24px)',
         transition: `opacity 0.7s ease ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,

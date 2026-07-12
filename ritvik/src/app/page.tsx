@@ -3,49 +3,37 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   MapPin, Mail, Globe, ExternalLink, Linkedin,
-  LayoutGrid, Briefcase, Zap, GraduationCap, ChevronDown, ChevronUp,
-  Salad, Activity, Music, Sparkles, Trophy, Medal, Users, Package,
+  ChevronDown, ChevronUp,
+  Sparkles, Trophy, Medal, Users, Package,
   Smartphone, MonitorSmartphone, Server, Terminal, BookOpen, KeyRound,
   Watch, Disc3, ChefHat, Palette, HeartHandshake, ArrowUpRight,
 } from 'lucide-react'
 import { FaApple } from 'react-icons/fa'
+import { C } from '@/lib/palette'
 import {
   Reveal, CountUp,
   LogTriageDemo, EyeGazeDemo, ProvisionRaceDemo, PrinterDemo,
   HealthLoopDemo, BeatTapDemo, ViolinDemo, IronmanTracker,
 } from '@/components/demos'
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
-const C = {
-  bg:        '#F5F5F7',
-  surface:   '#FFFFFF',
-  surface2:  '#F2F2F7',
-  label:     '#1D1D1F',
-  label2:    '#6E6E73',
-  label3:    '#AEAEB2',
-  sep:       'rgba(60,60,67,0.10)',
-  forest:    '#1C3829',
-  forestMid: '#2D6A4F',
-  forestBg:  '#E8F2EC',
-  forestBg2: '#D4E8DB',
-}
-
-// ─── Dock constants ───────────────────────────────────────────────────────────
-const DOCK_BASE = 48
-const DOCK_MAX_SCALE = 1.65
-const DOCK_RADIUS = 120
-const DOCK_EXTRA_PAD = Math.ceil(DOCK_BASE * (DOCK_MAX_SCALE - 1)) + 8
-
-// ─── Hello constants ──────────────────────────────────────────────────────────
-const HELLOS = ['Hello.', 'Hola.', 'Bonjour.', 'नमस्ते।', 'Ciao.', 'こんにちは。', 'Hello.']
-const RAINBOW = 'linear-gradient(90deg, #bf5af2 0%, #0a84ff 20%, #30d158 40%, #ffd60a 60%, #ff9f0a 80%, #ff375f 100%)'
+// ─── Nav sections ─────────────────────────────────────────────────────────────
+const NAV = [
+  { label: 'Work',        href: '#work' },
+  { label: 'FasterFoods', href: '#fasterfoods' },
+  { label: 'Projects',    href: '#projects' },
+  { label: 'Sport',       href: '#sport' },
+  { label: 'Beyond',      href: '#beyond' },
+  { label: 'Skills',      href: '#skills' },
+  { label: 'Education',   href: '#education' },
+  { label: 'Contact',     href: '#contact' },
+]
 
 // ─── Shared bits ──────────────────────────────────────────────────────────────
 
 function Chip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-      style={{ background: C.surface2, color: C.label2 }}>
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border"
+      style={{ borderColor: C.sep, color: C.label2 }}>
       {label}
     </span>
   )
@@ -53,32 +41,40 @@ function Chip({ label }: { label: string }) {
 
 function LiveDot({ text = 'Current' }: { text?: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-      style={{ background: C.forestBg, color: C.forest }}>
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
+      style={{ background: C.forest, color: '#fff' }}>
       <span className="relative flex h-1.5 w-1.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-          style={{ background: C.forest }} />
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: C.forest }} />
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
       </span>
       {text}
     </span>
   )
 }
 
-function SectionLabel({ eyebrow, heading, sub }: { eyebrow: string; heading: string; sub?: string }) {
+function SectionLabel({ index, eyebrow, heading, sub }: {
+  index: string; eyebrow: string; heading: string; sub?: string
+}) {
   return (
-    <Reveal className="mb-10">
-      <p className="text-xs font-bold tracking-widest uppercase mb-1.5" style={{ color: C.forest }}>{eyebrow}</p>
-      <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: C.label }}>{heading}</h2>
-      {sub && <p className="text-sm mt-2 max-w-xl leading-relaxed" style={{ color: C.label2 }}>{sub}</p>}
+    <Reveal className="mb-10 md:mb-14">
+      <div className="flex items-center gap-3 mb-4">
+        <span className="font-mono text-[11px] font-bold px-2 py-1 rounded border"
+          style={{ color: C.forest, borderColor: C.forest }}>{index}</span>
+        <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: C.forest }}>{eyebrow}</p>
+      </div>
+      <h2 className="font-display font-extrabold leading-[0.95] tracking-tight"
+        style={{ color: C.ink, fontSize: 'clamp(2.1rem, 5.6vw, 3.75rem)' }}>
+        {heading}
+      </h2>
+      {sub && <p className="text-sm sm:text-base mt-4 max-w-xl leading-relaxed" style={{ color: C.label2 }}>{sub}</p>}
     </Reveal>
   )
 }
 
-function LogoTile({ text, bg = C.forestBg, color = C.forest }: { text: string; bg?: string; color?: string }) {
+function LogoTile({ text }: { text: string }) {
   return (
-    <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black flex-shrink-0"
-      style={{ background: bg, color, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black flex-shrink-0"
+      style={{ background: C.forest, color: '#fff' }}>
       {text}
     </div>
   )
@@ -86,98 +82,51 @@ function LogoTile({ text, bg = C.forestBg, color = C.forest }: { text: string; b
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-white rounded-3xl card-lift ${className}`}
-      style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: `1px solid ${C.sep}` }}>
+    <div className={`bg-white rounded-2xl card-flat ${className}`}
+      style={{ border: `1.5px solid ${C.sep}` }}>
       {children}
     </div>
   )
 }
 
-// ─── Dock ─────────────────────────────────────────────────────────────────────
+// ─── Nav ──────────────────────────────────────────────────────────────────────
 
-function Dock() {
-  const items = [
-    { Icon: Briefcase,     label: 'Work',        href: '#work' },
-    { Icon: Salad,         label: 'FasterFoods', href: '#fasterfoods' },
-    { Icon: LayoutGrid,    label: 'Projects',    href: '#projects' },
-    { Icon: Activity,      label: 'Sport',       href: '#sport' },
-    { Icon: Music,         label: 'Beyond',      href: '#beyond' },
-    { Icon: Zap,           label: 'Skills',      href: '#skills' },
-    { Icon: GraduationCap, label: 'Education',   href: '#education' },
-    { Icon: Mail,          label: 'Contact',     href: '#contact' },
-  ]
-
-  const itemRefs = useRef<(HTMLDivElement | null)[]>(items.map(() => null))
-  const [mouseX, setMouseX] = useState<number | null>(null)
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
-
-  function getScale(i: number): number {
-    if (mouseX === null) return 1
-    const el = itemRefs.current[i]
-    if (!el) return 1
-    const { left, width } = el.getBoundingClientRect()
-    const d = Math.abs(mouseX - (left + width / 2))
-    if (d >= DOCK_RADIUS) return 1
-    return 1 + (DOCK_MAX_SCALE - 1) * Math.cos((d / DOCK_RADIUS) * (Math.PI / 2))
-  }
-
-  const isHovering = mouseX !== null
-  const slotHeight = Math.ceil(DOCK_BASE * DOCK_MAX_SCALE)
+function Nav() {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 inset-x-0 flex justify-center z-50 pointer-events-none px-2">
-      <nav
-        className="pointer-events-auto flex items-end px-2.5 pb-2.5 rounded-[26px] glass border shadow-xl max-w-full overflow-x-auto"
-        style={{
-          borderColor: C.sep,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
-          paddingTop: DOCK_EXTRA_PAD,
-          gap: 6,
-        }}
-        onMouseMove={e => setMouseX(e.clientX)}
-        onMouseLeave={() => { setMouseX(null); setHoveredIdx(null) }}
-      >
-        {items.map(({ Icon, label, href }, i) => {
-          const scale = getScale(i)
-          const sz = Math.round(DOCK_BASE * scale)
-          const isHov = hoveredIdx === i
-          return (
-            <a key={label} href={href}
-              className="relative flex flex-col items-center justify-end"
-              style={{ height: slotHeight }}
-              onMouseEnter={() => setHoveredIdx(i)}
-              onMouseLeave={() => setHoveredIdx(null)}>
-              <div className="absolute left-1/2 pointer-events-none px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap"
-                style={{
-                  bottom: 'calc(100% + 8px)', transform: 'translateX(-50%)',
-                  background: C.surface, color: C.label,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.12)', border: `1px solid ${C.sep}`,
-                  opacity: isHov ? 1 : 0, transition: 'opacity 0.12s ease',
-                }}>
-                {label}
-              </div>
-              <div ref={el => { itemRefs.current[i] = el }}
-                className="flex items-center justify-center rounded-[16px]"
-                style={{
-                  width: sz, height: sz,
-                  background: isHov ? C.forestBg2 : C.forestBg,
-                  color: C.forest,
-                  transition: isHovering
-                    ? 'width 0.08s ease, height 0.08s ease, background 0.12s ease'
-                    : 'width 0.42s cubic-bezier(0.34,1.56,0.64,1), height 0.42s cubic-bezier(0.34,1.56,0.64,1), background 0.12s ease',
-                  boxShadow: isHov ? '0 4px 16px rgba(28,56,41,0.18)' : 'none',
-                }}>
-                <Icon size={Math.round(22 * scale)} strokeWidth={1.75} />
-              </div>
+    <header className="fixed top-0 inset-x-0 z-50 transition-colors duration-200"
+      style={{
+        background: scrolled ? 'rgba(244,243,238,0.92)' : 'transparent',
+        borderBottom: scrolled ? `1.5px solid ${C.sep}` : '1.5px solid transparent',
+      }}>
+      <nav className="max-w-6xl mx-auto flex items-center justify-between gap-6 px-5 sm:px-8 py-4">
+        <a href="#" className="font-display font-extrabold text-sm tracking-tight flex-shrink-0" style={{ color: C.ink }}>
+          RITVIK JOSHI
+        </a>
+        <div className="flex items-center gap-5 overflow-x-auto whitespace-nowrap" style={{ scrollbarWidth: 'none' }}>
+          {NAV.map(item => (
+            <a key={item.label} href={item.href}
+              className="text-xs font-bold uppercase tracking-widest transition-colors hover:opacity-100"
+              style={{ color: C.label2, opacity: 0.85 }}>
+              {item.label}
             </a>
-          )
-        })}
+          ))}
+        </div>
       </nav>
-    </div>
+    </header>
   )
 }
 
 // ─── Hello Effect ─────────────────────────────────────────────────────────────
+
+const HELLOS = ['Hello.', 'Hola.', 'Bonjour.', 'नमस्ते।', 'Ciao.', 'こんにちは。', 'Hello.']
 
 function HelloEffect() {
   const [idx, setIdx] = useState(0)
@@ -186,7 +135,7 @@ function HelloEffect() {
 
   useEffect(() => {
     if (isDone) return
-    const delay = idx === 0 ? 2800 : 380
+    const delay = idx === 0 ? 2200 : 380
     const t = setTimeout(() => setVisible(false), delay)
     return () => clearTimeout(t)
   }, [idx, isDone])
@@ -199,17 +148,13 @@ function HelloEffect() {
   }, [visible, isDone])
 
   return (
-    <div className="mb-5 select-none" style={{ lineHeight: 1 }}>
+    <div className="mb-3 select-none" style={{ lineHeight: 1 }}>
       <span key={idx} className={idx === 0 ? 'hello-animate' : ''}
         style={{
           display: 'inline-block',
-          fontSize: 'clamp(3rem, 9vw, 5.5rem)',
-          fontFamily: 'var(--font-dancing)',
-          fontWeight: 700,
-          background: RAINBOW,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
+          fontFamily: 'var(--font-marvin)',
+          fontSize: 'clamp(1.75rem, 4.5vw, 2.75rem)',
+          color: C.forest,
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(-8px)',
           transition: idx > 0 ? 'opacity 0.14s ease, transform 0.14s ease' : undefined,
@@ -244,9 +189,9 @@ function RotatingIdentity() {
   }, [])
 
   return (
-    <p className="text-lg sm:text-xl font-semibold h-7 mb-6"
+    <p className="font-display text-xl sm:text-2xl font-extrabold h-8 mb-6"
       style={{
-        color: C.forestMid,
+        color: C.forest,
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(6px)',
         transition: 'opacity 0.25s ease, transform 0.25s ease',
@@ -260,62 +205,49 @@ function RotatingIdentity() {
 
 function Hero() {
   return (
-    <section className="flex flex-col items-center justify-center text-center px-5 pt-24 pb-32 min-h-screen relative overflow-hidden">
-      <HelloEffect />
+    <section className="flex flex-col justify-center px-5 sm:px-8 pt-32 pb-24 min-h-screen relative">
+      <div className="max-w-6xl mx-auto w-full">
+        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-8"
+          style={{ color: C.label3 }}>
+          <MapPin size={13} style={{ color: C.forest }} />
+          London, UK &nbsp;·&nbsp; AI &amp; Full-Stack Engineer
+        </span>
 
-      {/* Monogram avatar */}
-      <div className="float mb-7">
-        <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center text-4xl font-black text-white"
-          style={{
-            background: `linear-gradient(140deg, ${C.forestMid}, ${C.forest})`,
-            boxShadow: '0 0 0 4px #fff, 0 8px 40px rgba(28,56,41,0.25)',
-          }}>
-          RJ
+        <HelloEffect />
+
+        <h1 className="font-marvin leading-[0.92] tracking-tight mb-6"
+          style={{ color: C.ink, fontSize: 'clamp(3.25rem, 11vw, 8.5rem)' }}>
+          RITVIK<br />JOSHI
+        </h1>
+
+        <RotatingIdentity />
+
+        <p className="text-base sm:text-lg max-w-xl leading-relaxed mb-9" style={{ color: C.label2 }}>
+          Tinkering with technology since I was 12 — now building AI systems for global aviation at{' '}
+          <span className="font-bold" style={{ color: C.ink }}>SITA</span>, and{' '}
+          <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
+            className="font-bold hover:underline" style={{ color: C.forest }}>FasterFoods</a>
+          {' '}after hours. I love collaborating, big ideas, and geeking out — scroll down and you can{' '}
+          <span className="font-bold" style={{ color: C.ink }}>play with little working demos</span>{' '}
+          of almost everything I&apos;ve done.
+        </p>
+
+        <div className="flex flex-wrap gap-3">
+          <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+            <Linkedin size={15} /> LinkedIn
+          </a>
+          <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+            <Globe size={15} /> FasterFoods
+          </a>
+          <a href="mailto:ritvikjoshi97@gmail.com" className="btn btn-ghost">
+            <Mail size={15} /> Email
+          </a>
         </div>
       </div>
 
-      <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-none mb-4"
-        style={{ color: C.label }}>
-        Ritvik <span className="gradient-text">Joshi</span>
-      </h1>
-
-      <RotatingIdentity />
-
-      <p className="flex items-center justify-center gap-1.5 text-sm mb-6" style={{ color: C.label3 }}>
-        <MapPin size={13} style={{ color: C.forest }} />
-        London, UK
-      </p>
-
-      <p className="text-base max-w-lg leading-relaxed mb-8" style={{ color: C.label2 }}>
-        Tinkering with technology since I was 12 — now building AI systems for global aviation at{' '}
-        <span className="font-semibold" style={{ color: C.label }}>SITA</span>, and{' '}
-        <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-          className="font-semibold hover:underline" style={{ color: C.forest }}>FasterFoods</a>
-        {' '}after hours. I love collaborating, big ideas, and geeking out — scroll down and you can{' '}
-        <span className="font-semibold" style={{ color: C.label }}>play with little working demos</span>{' '}
-        of almost everything I&apos;ve done.
-      </p>
-
-      <div className="flex flex-wrap gap-3 justify-center mb-6">
-        <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ background: C.forest }}>
-          <Linkedin size={15} /> LinkedIn
-        </a>
-        <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors"
-          style={{ background: C.forestBg, color: C.forest }}>
-          <Globe size={15} /> FasterFoods
-        </a>
-        <a href="mailto:ritvikjoshi97@gmail.com"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border"
-          style={{ background: C.surface, color: C.label2, borderColor: C.sep, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <Mail size={15} /> Email
-        </a>
-      </div>
-
-      <div className="animate-bounce mt-6" style={{ color: C.label3 }}>
-        <ChevronDown size={20} />
+      <div className="absolute bottom-8 left-5 sm:left-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
+        style={{ color: C.label3 }}>
+        <span className="float inline-block">↓</span> Scroll
       </div>
     </section>
   )
@@ -325,24 +257,22 @@ function Hero() {
 
 const STATS = [
   { value: 16,    suffix: '',   label: 'years tinkering with tech' },
-  { value: 99.99, suffix: '%',  label: 'FasterFoods uptime, on a Raspberry Pi', decimals: 2 },
+  { value: 99.99, suffix: '%',  label: 'FasterFoods uptime, on self-hosted infra', decimals: 2 },
   { value: 8,     suffix: '',   label: 'teams I consult on AI across Europe & Asia' },
   { value: 5,     suffix: '★',  label: 'Dance Helper on the App Store' },
 ]
 
 function StatsStrip() {
   return (
-    <section className="px-5 pb-4">
-      <div className="max-w-4xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <section className="px-5 sm:px-8 py-10" style={{ borderTop: `1.5px solid ${C.sep}`, borderBottom: `1.5px solid ${C.sep}` }}>
+      <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4">
         {STATS.map((s, i) => (
-          <Reveal key={s.label} delay={i * 90}>
-            <div className="bg-white rounded-3xl p-5 text-center h-full"
-              style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: `1px solid ${C.sep}` }}>
-              <p className="text-3xl font-black mb-1" style={{ color: C.forest }}>
-                <CountUp to={s.value} suffix={s.suffix} decimals={s.decimals ?? 0} />
-              </p>
-              <p className="text-xs leading-snug" style={{ color: C.label2 }}>{s.label}</p>
-            </div>
+          <Reveal key={s.label} delay={i * 90} className="px-4 sm:px-6 first:pl-0"
+            style={i > 0 ? { borderLeft: `1.5px solid ${C.sep}` } : undefined}>
+            <p className="font-display font-black mb-1" style={{ color: C.forest, fontSize: 'clamp(2rem, 4vw, 2.75rem)' }}>
+              <CountUp to={s.value} suffix={s.suffix} decimals={s.decimals ?? 0} />
+            </p>
+            <p className="text-xs sm:text-sm leading-snug" style={{ color: C.label2 }}>{s.label}</p>
           </Reveal>
         ))}
       </div>
@@ -475,7 +405,7 @@ function ExpCard({ exp, delay }: { exp: Experience; delay: number }) {
             <LogoTile text={exp.monogram} />
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                <h3 className="text-base font-bold" style={{ color: C.label }}>{exp.company}</h3>
+                <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>{exp.company}</h3>
                 {exp.isCurrent && <LiveDot />}
                 {exp.linkedIn && (
                   <a href={exp.linkedIn} target="_blank" rel="noopener noreferrer"
@@ -495,12 +425,12 @@ function ExpCard({ exp, delay }: { exp: Experience; delay: number }) {
                 <div key={ri} className={ri > 0 ? 'pt-5' : ''}
                   style={ri > 0 ? { borderTop: `1px solid ${C.sep}` } : {}}>
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="text-sm font-semibold" style={{ color: C.label }}>{role.title}</p>
+                    <p className="text-sm font-bold" style={{ color: C.label }}>{role.title}</p>
                     <span className="text-xs font-mono flex-shrink-0" style={{ color: C.label3 }}>{role.period}</span>
                   </div>
 
                   {role.highlight && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold mb-3"
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold mb-3"
                       style={{ background: '#FFFBEB', border: '1px solid rgba(217,119,6,0.2)', color: '#B45309' }}>
                       {role.highlight}
                     </div>
@@ -526,7 +456,7 @@ function ExpCard({ exp, delay }: { exp: Experience; delay: number }) {
           <div className="flex flex-wrap items-center gap-4 mt-4">
             {totalBullets > 2 && (
               <button onClick={() => setOpen(!open)}
-                className="flex items-center gap-1 text-xs font-semibold transition-opacity hover:opacity-70"
+                className="flex items-center gap-1 text-xs font-bold transition-opacity hover:opacity-70"
                 style={{ color: C.label2 }}>
                 {open ? <><ChevronUp size={14} /> Show less</> : <><ChevronDown size={14} /> Full story</>}
               </button>
@@ -552,9 +482,9 @@ function ExpCard({ exp, delay }: { exp: Experience; delay: number }) {
 
 function WorkSection() {
   return (
-    <section id="work" className="py-20 px-5">
+    <section id="work" className="py-20 px-5 sm:px-8">
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Career" heading="Work"
+        <SectionLabel index="01" eyebrow="Career" heading="Work"
           sub="Every job below has a tiny interactive demo — a toy version of the real thing I built. Press the green buttons." />
         <div className="space-y-4">
           {experiences.map((exp, i) => <ExpCard key={exp.company} exp={exp} delay={i * 60} />)}
@@ -577,27 +507,35 @@ const FF_STACK = [
 
 function FasterFoodsSection() {
   return (
-    <section id="fasterfoods" className="py-20 px-5">
+    <section id="fasterfoods" className="py-20 px-5 sm:px-8" style={{ background: C.forest }}>
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Pet project · months in the making" heading="FasterFoods"
-          sub="A complete personal health & fitness platform, built on one idea: your health starts from what you buy, what's in your kitchen, what you actually ate, how you trained with that energy — and how you recovered." />
+        <Reveal className="mb-10 md:mb-14">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="font-mono text-[11px] font-bold px-2 py-1 rounded border border-white/40 text-white">02</span>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-white/70">Pet project · months in the making</p>
+          </div>
+          <h2 className="font-display font-extrabold leading-[0.95] tracking-tight text-white"
+            style={{ fontSize: 'clamp(2.1rem, 5.6vw, 3.75rem)' }}>
+            FasterFoods
+          </h2>
+          <p className="text-sm sm:text-base mt-4 max-w-xl leading-relaxed text-white/75">
+            A complete personal health & fitness platform, built on one idea: your health starts from what you buy, what&apos;s in your kitchen, what you actually ate, how you trained with that energy — and how you recovered.
+          </p>
+        </Reveal>
 
         <Reveal>
-          <Card className="overflow-hidden">
-            <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${C.forest}, ${C.forestMid})` }} />
+          <div className="bg-white rounded-2xl overflow-hidden">
             <div className="p-7 lg:p-9">
               <div className="flex flex-wrap items-center gap-3 mb-7">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
                   style={{ background: C.forestBg }}>🥗</div>
                 <div className="flex-1 min-w-[200px]">
-                  <h3 className="text-xl font-bold" style={{ color: C.label }}>The Health Loop</h3>
-                  <p className="text-sm font-medium" style={{ color: C.forest }}>
-                    Self-hosted on a Raspberry Pi · 99.99% uptime · GDPR-compliant
+                  <h3 className="font-display text-xl font-extrabold" style={{ color: C.label }}>The Health Loop</h3>
+                  <p className="text-sm font-bold" style={{ color: C.forest }}>
+                    Self-hosted on bare metal · 99.99% uptime · GDPR-compliant
                   </p>
                 </div>
-                <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                  style={{ background: C.forest }}>
+                <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                   <Globe size={13} /> fasterfoods.co.uk <ExternalLink size={11} />
                 </a>
               </div>
@@ -632,13 +570,13 @@ function FasterFoodsSection() {
                     <Chip key={t} label={t} />)}
                 </div>
                 <a href="https://pypi.org/project/fasterfoodsstack/" target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-5 text-xs font-semibold hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1.5 mt-5 text-xs font-bold hover:opacity-70 transition-opacity"
                   style={{ color: C.forest }}>
                   <Package size={13} /> pip install fasterfoodsstack <ArrowUpRight size={11} />
                 </a>
               </div>
             </div>
-          </Card>
+          </div>
         </Reveal>
       </div>
     </section>
@@ -649,9 +587,9 @@ function FasterFoodsSection() {
 
 function ProjectsSection() {
   return (
-    <section id="projects" className="py-20 px-5">
+    <section id="projects" className="py-20 px-5 sm:px-8">
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Shipped" heading="Projects" />
+        <SectionLabel index="03" eyebrow="Shipped" heading="Projects" />
         <div className="grid lg:grid-cols-2 gap-4 items-start">
           {/* Dance Helper with live demo */}
           <Reveal>
@@ -660,8 +598,8 @@ function ProjectsSection() {
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                   style={{ background: C.forestBg }}>💃</div>
                 <div>
-                  <h3 className="text-base font-bold" style={{ color: C.label }}>Dance Helper</h3>
-                  <p className="text-xs font-semibold" style={{ color: C.forest }}>iOS · Live on the App Store · 5★</p>
+                  <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Dance Helper</h3>
+                  <p className="text-xs font-bold" style={{ color: C.forest }}>iOS · Live on the App Store · 5★</p>
                 </div>
               </div>
               <p className="text-sm leading-relaxed mb-4" style={{ color: C.label2 }}>
@@ -673,7 +611,7 @@ function ProjectsSection() {
                 {['Swift', 'SwiftUI', 'Core Audio', 'DSP'].map(t => <Chip key={t} label={t} />)}
               </div>
               <a href="https://apps.apple.com/dance-helper" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-70 transition-opacity"
+                className="inline-flex items-center gap-1.5 text-xs font-bold hover:opacity-70 transition-opacity"
                 style={{ color: C.forest }}>
                 <FaApple size={13} /> App Store <ArrowUpRight size={11} />
               </a>
@@ -687,8 +625,8 @@ function ProjectsSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}>🤖</div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>MCP Client for SMEs</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>100+ users in production</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>MCP Client for SMEs</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>100+ users in production</p>
                   </div>
                 </div>
                 <ul className="space-y-1.5 text-sm leading-relaxed mb-4" style={{ color: C.label2 }}>
@@ -707,8 +645,8 @@ function ProjectsSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}>🛠</div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>The Maker Pile</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>Hardware itch, regularly scratched</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>The Maker Pile</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>Hardware itch, regularly scratched</p>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -738,9 +676,9 @@ function ProjectsSection() {
 
 function SportSection() {
   return (
-    <section id="sport" className="py-20 px-5">
+    <section id="sport" className="py-20 px-5 sm:px-8">
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Engine maintenance" heading="Sport & Nutrition"
+        <SectionLabel index="04" eyebrow="Engine maintenance" heading="Sport & Nutrition"
           sub="The other half of the FasterFoods origin story. Six years of consistent training, and a calendar that always has a start line on it." />
 
         <div className="grid lg:grid-cols-2 gap-4">
@@ -751,8 +689,8 @@ function SportSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}>🏃</div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>Long-distance running</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>National-level athlete (India)</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Long-distance running</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>National-level athlete (India)</p>
                   </div>
                 </div>
               </div>
@@ -763,7 +701,7 @@ function SportSection() {
                 </li>
                 <li className="flex gap-2.5">
                   <Users size={15} className="flex-shrink-0 mt-0.5" style={{ color: C.forestMid }} />
-                  Organised the <span className="font-semibold" style={{ color: C.label }}>Manipal Marathon</span> — the other side of the start line.
+                  Organised the <span className="font-bold" style={{ color: C.label }}>Manipal Marathon</span> — the other side of the start line.
                 </li>
               </ul>
               <div className="rounded-2xl p-4" style={{ background: C.surface2 }}>
@@ -782,17 +720,15 @@ function SportSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}>🏸</div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>Badminton & Football</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>Played semi-professionally · now in London</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Badminton & Football</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>Played semi-professionally · now in London</p>
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed mb-4" style={{ color: C.label2 }}>
                   Still playing every week in London. If you fancy a match — singles, doubles, or a
                   kickabout — I will absolutely take you up on it.
                 </p>
-                <a href="mailto:ritvikjoshi97@gmail.com?subject=Let's%20play!"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                  style={{ background: C.forest }}>
+                <a href="mailto:ritvikjoshi97@gmail.com?subject=Let's%20play!" className="btn btn-primary">
                   <HeartHandshake size={14} /> Set up a session
                 </a>
               </Card>
@@ -804,14 +740,14 @@ function SportSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}>🏋️</div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>Six years under the bar</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>Where FasterFoods came from</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Six years under the bar</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>Where FasterFoods came from</p>
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: C.label2 }}>
                   A six-year gym routine taught me that the hard part of fitness isn&apos;t the workout —
                   it&apos;s tracking everything around it. That itch became{' '}
-                  <a href="#fasterfoods" className="font-semibold hover:underline" style={{ color: C.forest }}>FasterFoods</a>.
+                  <a href="#fasterfoods" className="font-bold hover:underline" style={{ color: C.forest }}>FasterFoods</a>.
                 </p>
               </Card>
             </Reveal>
@@ -826,9 +762,9 @@ function SportSection() {
 
 function BeyondSection() {
   return (
-    <section id="beyond" className="py-20 px-5">
+    <section id="beyond" className="py-20 px-5 sm:px-8">
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Off the clock" heading="Beyond the keyboard" />
+        <SectionLabel index="05" eyebrow="Off the clock" heading="Beyond the keyboard" />
         <div className="grid lg:grid-cols-2 gap-4 items-start">
           <Reveal>
             <Card className="p-6">
@@ -836,8 +772,8 @@ function BeyondSection() {
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                   style={{ background: C.forestBg }}>🎻</div>
                 <div>
-                  <h3 className="text-base font-bold" style={{ color: C.label }}>Violin</h3>
-                  <p className="text-xs font-semibold" style={{ color: C.forest }}>Playing since I was 16</p>
+                  <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Violin</h3>
+                  <p className="text-xs font-bold" style={{ color: C.forest }}>Playing since I was 16</p>
                 </div>
               </div>
               <ViolinDemo />
@@ -851,8 +787,8 @@ function BeyondSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}><ChefHat size={22} style={{ color: C.forestMid }} /></div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>Cooking</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>Since I was 9</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Cooking</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>Since I was 9</p>
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: C.label2 }}>
@@ -868,8 +804,8 @@ function BeyondSection() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                     style={{ background: C.forestBg }}><Palette size={22} style={{ color: C.forestMid }} /></div>
                   <div>
-                    <h3 className="text-base font-bold" style={{ color: C.label }}>Art</h3>
-                    <p className="text-xs font-semibold" style={{ color: C.forest }}>Occasional, unhurried</p>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Art</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>Occasional, unhurried</p>
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: C.label2 }}>
@@ -897,9 +833,9 @@ const skillCategories = [
 
 function SkillsSection() {
   return (
-    <section id="skills" className="py-20 px-5">
+    <section id="skills" className="py-20 px-5 sm:px-8">
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Expertise" heading="Tech Stack" />
+        <SectionLabel index="06" eyebrow="Expertise" heading="Tech Stack" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {skillCategories.map((cat, i) => (
             <Reveal key={cat.name} delay={i * 60}>
@@ -923,9 +859,9 @@ function SkillsSection() {
 
 function EducationSection() {
   return (
-    <section id="education" className="py-20 px-5">
+    <section id="education" className="py-20 px-5 sm:px-8">
       <div className="max-w-4xl mx-auto">
-        <SectionLabel eyebrow="Academic" heading="Education" />
+        <SectionLabel index="07" eyebrow="Academic" heading="Education" />
         <div className="space-y-4">
           <Reveal>
             <Card className="p-6">
@@ -934,7 +870,7 @@ function EducationSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-bold" style={{ color: C.label }}>University of Nottingham</h3>
+                      <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>University of Nottingham</h3>
                       <a href="https://www.nottingham.ac.uk/" target="_blank" rel="noopener noreferrer"
                         className="hover:opacity-60 transition-opacity" style={{ color: C.label3 }}>
                         <ExternalLink size={12} />
@@ -942,7 +878,7 @@ function EducationSection() {
                     </div>
                     <span className="font-mono text-xs flex-shrink-0" style={{ color: C.label3 }}>Sept &apos;21 – Sept &apos;22</span>
                   </div>
-                  <p className="text-sm font-semibold mb-1" style={{ color: C.label2 }}>
+                  <p className="text-sm font-bold mb-1" style={{ color: C.label2 }}>
                     MSc in Computer Science with Artificial Intelligence
                   </p>
                   <p className="text-xs mb-3" style={{ color: C.label3 }}>Nottingham, UK · Merit</p>
@@ -969,7 +905,7 @@ function EducationSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-bold" style={{ color: C.label }}>Manipal Institute of Technology</h3>
+                      <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Manipal Institute of Technology</h3>
                       <a href="https://manipal.edu/mit.html" target="_blank" rel="noopener noreferrer"
                         className="hover:opacity-60 transition-opacity" style={{ color: C.label3 }}>
                         <ExternalLink size={12} />
@@ -977,7 +913,7 @@ function EducationSection() {
                     </div>
                     <span className="font-mono text-xs flex-shrink-0" style={{ color: C.label3 }}>Aug &apos;16 – July &apos;20</span>
                   </div>
-                  <p className="text-sm font-semibold mb-1" style={{ color: C.label2 }}>
+                  <p className="text-sm font-bold mb-1" style={{ color: C.label2 }}>
                     BTech in Instrumentation and Control, minor in Data Science
                   </p>
                   <p className="text-xs mb-2" style={{ color: C.label3 }}>Manipal, India</p>
@@ -999,32 +935,27 @@ function EducationSection() {
 
 function ContactSection() {
   return (
-    <section id="contact" className="py-20 px-5 pb-36">
+    <section id="contact" className="py-20 px-5 sm:px-8 pb-32">
       <div className="max-w-4xl mx-auto">
         <Reveal>
-          <div className="rounded-3xl p-9 sm:p-12 text-center overflow-hidden relative"
-            style={{ background: `linear-gradient(140deg, ${C.forest}, ${C.forestMid})` }}>
-            <h2 className="text-2xl sm:text-4xl font-black text-white mb-3">
-              Big idea? Let&apos;s geek out.
+          <div className="rounded-2xl p-9 sm:p-14 text-center" style={{ background: C.forest }}>
+            <h2 className="font-marvin text-white mb-4" style={{ fontSize: 'clamp(2rem, 6vw, 4rem)', lineHeight: 0.95 }}>
+              LET&apos;S GEEK OUT
             </h2>
-            <p className="text-sm sm:text-base max-w-lg mx-auto mb-7 leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.85)' }}>
+            <p className="text-sm sm:text-base max-w-lg mx-auto mb-8 leading-relaxed text-white/75">
               I love collaborating — on AI systems, on side projects, or on a badminton court.
               Whichever it is, my inbox is open.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <a href="mailto:ritvikjoshi97@gmail.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-transform hover:scale-105"
-                style={{ background: '#fff', color: C.forest }}>
+              <a href="mailto:ritvikjoshi97@gmail.com" className="btn btn-invert">
                 <Mail size={15} /> ritvikjoshi97@gmail.com
               </a>
               <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-transform hover:scale-105"
-                style={{ background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                className="btn" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', borderColor: 'rgba(255,255,255,0.4)' }}>
                 <Linkedin size={15} /> LinkedIn
               </a>
             </div>
-            <p className="text-xs mt-6" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            <p className="text-xs mt-7 text-white/50">
               <BookOpen size={11} className="inline mr-1" />
               London, UK · +44 (0)7760 917811
             </p>
@@ -1039,8 +970,8 @@ function ContactSection() {
 
 function Footer() {
   return (
-    <footer className="py-8 px-5 pb-28 text-center text-xs"
-      style={{ color: C.label3, borderTop: `1px solid ${C.sep}` }}>
+    <footer className="py-8 px-5 sm:px-8 text-center text-xs"
+      style={{ color: C.label3, borderTop: `1.5px solid ${C.sep}` }}>
       © {new Date().getFullYear()} Ritvik Joshi &nbsp;·&nbsp;
       <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
         className="hover:underline" style={{ color: C.forest }}>fasterfoods.co.uk</a>
@@ -1054,7 +985,7 @@ function Footer() {
 export default function RitvikPage() {
   return (
     <div className="min-h-screen" style={{ background: C.bg, color: C.label }}>
-      <Dock />
+      <Nav />
       <Hero />
       <StatsStrip />
       <WorkSection />

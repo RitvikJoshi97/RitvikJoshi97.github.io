@@ -9,6 +9,11 @@ export default {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			marvin: ['var(--font-marvin)', 'sans-serif'],
+  			display: ['var(--font-display)', 'sans-serif'],
+  			body: ['var(--font-body)', 'sans-serif'],
+  		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
