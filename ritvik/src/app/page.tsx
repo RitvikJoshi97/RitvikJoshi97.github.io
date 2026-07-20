@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import {
   MapPin, Mail, Globe, ExternalLink, Linkedin,
   ChevronDown, ChevronUp,
@@ -206,42 +207,60 @@ function RotatingIdentity() {
 function Hero() {
   return (
     <section className="flex flex-col justify-center px-5 sm:px-8 pt-32 pb-24 min-h-screen relative">
-      <div className="max-w-6xl mx-auto w-full">
-        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-8"
-          style={{ color: C.label3 }}>
-          <MapPin size={13} style={{ color: C.forest }} />
-          London, UK &nbsp;·&nbsp; AI &amp; Full-Stack Engineer
-        </span>
+      <div className="max-w-6xl mx-auto w-full flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="flex-1 min-w-0">
+          <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-8"
+            style={{ color: C.label3 }}>
+            <MapPin size={13} style={{ color: C.forest }} />
+            London, UK &nbsp;·&nbsp; AI &amp; Full-Stack Engineer
+          </span>
 
-        <HelloEffect />
+          <HelloEffect />
 
-        <h1 className="font-marvin leading-[0.92] tracking-tight mb-6"
-          style={{ color: C.ink, fontSize: 'clamp(3.25rem, 11vw, 8.5rem)' }}>
-          RITVIK<br />JOSHI
-        </h1>
+          <h1 className="font-marvin leading-[0.92] tracking-tight mb-6"
+            style={{ color: C.ink, fontSize: 'clamp(3.25rem, 11vw, 8.5rem)' }}>
+            RITVIK<br />JOSHI
+          </h1>
 
-        <RotatingIdentity />
+          <RotatingIdentity />
 
-        <p className="text-base sm:text-lg max-w-xl leading-relaxed mb-9" style={{ color: C.label2 }}>
-          Tinkering with technology since I was 12 — now building AI systems for global aviation at{' '}
-          <span className="font-bold" style={{ color: C.ink }}>SITA</span>, and{' '}
-          <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
-            className="font-bold hover:underline" style={{ color: C.forest }}>FasterFoods</a>
-          {' '}after hours. I love collaborating, big ideas, and geeking out — scroll down and you can{' '}
-          <span className="font-bold" style={{ color: C.ink }}>play with little working demos</span>{' '}
-          of almost everything I&apos;ve done.
-        </p>
+          <p className="text-base sm:text-lg max-w-xl leading-relaxed mb-9" style={{ color: C.label2 }}>
+            Tinkering with technology since I was 12 — now building AI systems for global aviation at{' '}
+            <span className="font-bold" style={{ color: C.ink }}>SITA</span>, and{' '}
+            <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer"
+              className="font-bold hover:underline" style={{ color: C.forest }}>FasterFoods</a>
+            {' '}after hours. I love collaborating, big ideas, and geeking out — scroll down and you can{' '}
+            <span className="font-bold" style={{ color: C.ink }}>play with little working demos</span>{' '}
+            of almost everything I&apos;ve done.
+          </p>
 
-        <div className="flex flex-wrap gap-3">
-          <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            <Linkedin size={15} /> LinkedIn
-          </a>
-          <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
-            <Globe size={15} /> FasterFoods
-          </a>
-          <a href="mailto:ritvikjoshi97@gmail.com" className="btn btn-ghost">
-            <Mail size={15} /> Email
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a href="https://linkedin.com/in/ritvik-joshi-327508ba" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              <Linkedin size={15} /> LinkedIn
+            </a>
+            <a href="https://fasterfoods.co.uk" target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+              <Globe size={15} /> FasterFoods
+            </a>
+            <a href="mailto:ritvikjoshi97@gmail.com" className="btn btn-ghost">
+              <Mail size={15} /> Email
+            </a>
+          </div>
+        </div>
+
+        <div className="relative shrink-0 rounded-full overflow-hidden"
+          style={{
+            width: 'clamp(16rem, 30vw, 26rem)',
+            height: 'clamp(16rem, 30vw, 26rem)',
+          }}>
+          <Image
+            src="/Rectangle.png"
+            alt="Ritvik Joshi"
+            fill
+            sizes="(min-width: 1024px) 26rem, 16rem"
+            className="object-cover"
+            style={{ objectPosition: '50% 20%' }}
+            priority
+          />
         </div>
       </div>
 
