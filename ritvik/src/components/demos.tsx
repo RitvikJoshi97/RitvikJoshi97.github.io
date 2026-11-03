@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Play, RotateCcw, Sparkles, Timer, CheckCircle2, Printer,
   ShoppingCart, Archive, UtensilsCrossed, Dumbbell, Moon,
-  Waves, Bike, Footprints,
+  Waves, Bike, Footprints, AlertTriangle, Camera, Eye,
 } from 'lucide-react'
 import { C } from '@/lib/palette'
 
@@ -45,16 +45,25 @@ export function Reveal({ children, delay = 0, className = '', style }: {
 
 // ─── Animated counter ─────────────────────────────────────────────────────────
 
-export function CountUp({ to, suffix = '', decimals = 0, duration = 1400 }: {
-  to: number; suffix?: string; decimals?: number; duration?: number
+export function CountUp({ to, prefix = '', suffix = '', decimals = 0, duration = 1400 }: {
+  to: number; prefix?: string; suffix?: string; decimals?: number; duration?: number
 }) {
   const ref = useRef<HTMLSpanElement>(null)
-  const [val, setVal] = useState(0)
+  // Start at the final value so the static HTML (link previews, scrapers, no-JS,
+  // screen readers) carries the real number; only animate once JS is running.
+  const [val, setVal] = useState(to)
   const started = useRef(false)
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduce) return
+    // Only replay the count if the number is still off-screen; if it's already
+    // visible on load, leave the final value in place rather than flashing to 0.
+    const r = el.getBoundingClientRect()
+    if (r.top < window.innerHeight && r.bottom > 0) return
+    setVal(0)
     const obs = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting || started.current) return
       started.current = true
@@ -71,7 +80,8 @@ export function CountUp({ to, suffix = '', decimals = 0, duration = 1400 }: {
     return () => obs.disconnect()
   }, [to, duration])
 
-  return <span ref={ref}>{val.toFixed(decimals)}{suffix}</span>
+  const shown = val.toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+  return <span ref={ref}>{prefix}{shown}{suffix}</span>
 }
 
 // ─── Demo shell ───────────────────────────────────────────────────────────────
@@ -180,80 +190,267 @@ export function LogTriageDemo() {
   )
 }
 
-// ─── 2. Blueskeye: eye-gaze tracker ───────────────────────────────────────────
+// ─── 2. Blueskeye: gaze logging → drowsiness detection ────────────────────────
+// One continuous picture: the road fills the whole frame, dash-cam style, with
+// the driver's eyes as a picture-in-picture inset — same two acts as before
+// (dissertation monitor, then automotive windshield) but looping on its own.
 
-function Eye({ dx, dy }: { dx: number; dy: number }) {
+type GazePhase = 'calibrating' | 'driving' | 'drowsy' | 'alert' | 'resolved'
+
+const GAZE_TARGETS = [
+  { x: 58, y: 60, label: 'Road ahead', dx: 0, dy: 2 },
+  { x: 50, y: 10, label: 'Rear-view mirror', dx: 0, dy: -8 },
+  { x: 88, y: 88, label: 'Speedometer', dx: 8, dy: 8 },
+  { x: 58, y: 60, label: 'Road ahead', dx: 0, dy: 2 },
+]
+
+// Picture-in-picture eye box sits bottom-left — used to anchor the gaze rays.
+const EYE_Y_PCT = 85
+const EYE_L_X_PCT = 9
+const EYE_R_X_PCT = 17
+
+function FaceEyes({ dx, dy, closed }: { dx: number; dy: number; closed: number }) {
   return (
-    <div className="relative rounded-full"
-      style={{ width: 64, height: 64, background: '#fff', border: `2px solid ${C.sep}`, boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.08)' }}>
-      <div className="absolute rounded-full flex items-center justify-center"
-        style={{
-          width: 26, height: 26, background: '#3a2a1a',
-          left: '50%', top: '50%',
-          transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`,
-          transition: 'transform 0.05s linear',
-        }}>
-        <div className="rounded-full" style={{ width: 10, height: 10, background: '#000' }} />
-        <div className="absolute rounded-full" style={{ width: 5, height: 5, background: 'rgba(255,255,255,0.85)', top: 4, left: 5 }} />
+    <div className="flex gap-1">
+      {[0, 1].map(i => (
+        <div key={i} className="relative rounded-full overflow-hidden flex-shrink-0"
+          style={{ width: 22, height: 22, background: '#fff' }}>
+          <div className="absolute rounded-full" style={{
+            width: 10, height: 10, background: '#2b2b2e',
+            left: '50%', top: '50%',
+            transform: `translate(calc(-50% + ${dx * 0.6}px), calc(-50% + ${dy * 0.6}px))`,
+            transition: 'transform 0.4s ease',
+            opacity: 1 - closed,
+          }} />
+          <div className="absolute inset-x-0 top-0"
+            style={{ height: `${closed * 100}%`, background: C.ink, transition: 'height 0.9s ease' }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Dashed rays from each eye to whatever the driver is currently looking at —
+// the whole point of a gaze model is the vector, not just where the pupil sits.
+function GazeArrows({ target, opacity }: { target: { x: number; y: number }; opacity: number }) {
+  return (
+    <svg className="absolute inset-0" width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+      <defs>
+        <marker id="gazeArrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#FFD60A" />
+        </marker>
+      </defs>
+      {[EYE_L_X_PCT, EYE_R_X_PCT].map(ex => (
+        <line key={ex} x1={`${ex}%`} y1={`${EYE_Y_PCT}%`} x2={`${target.x}%`} y2={`${target.y}%`}
+          stroke="#FFD60A" strokeWidth={1.5} strokeDasharray="4 3" opacity={opacity}
+          markerEnd="url(#gazeArrowhead)" style={{ transition: 'opacity 0.5s ease' }} />
+      ))}
+    </svg>
+  )
+}
+
+// Cars ahead on the road, sized/positioned by how far down the (perspective)
+// road they sit — f=0 is right at the horizon, f=1 is nearest the camera.
+const ROAD_CARS = [
+  { f: 0.08, side: -1, color: '#C7443B' },
+  { f: 0.24, side: 1, color: '#3E6FA8' },
+  { f: 0.52, side: -1, color: '#AEB4BB' },
+]
+
+// A simple rear-three-quarter car glyph — body, cabin/rear-window, taillights —
+// legible as an actual car even at a few pixels tall, unlike a flat blob.
+function RoadCar({ f, side, color }: { f: number; side: number; color: string }) {
+  const roadWidthPct = 18 + 82 * f // matches the road's clip-path trapezoid
+  const w = 6 + f * 26
+  const h = w * 0.85
+  const left = 50 + side * roadWidthPct * 0.24
+  return (
+    <svg className="absolute" viewBox="0 0 20 17" style={{
+      left: `${left}%`, top: `${f * 100}%`, width: w, height: h,
+      transform: 'translate(-50%,-100%)', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.35))',
+    }}>
+      <rect x="1.5" y="4" width="17" height="12" rx="2.5" fill={color} />
+      <rect x="4.5" y="0.5" width="11" height="6.5" rx="2" fill={color} />
+      <rect x="5.6" y="1.6" width="8.8" height="3.6" rx="1.1" fill="rgba(255,255,255,0.6)" />
+      <rect x="2.6" y="13.4" width="2.6" height="1.8" rx="0.6" fill="#ff453a" />
+      <rect x="14.8" y="13.4" width="2.6" height="1.8" rx="0.6" fill="#ff453a" />
+    </svg>
+  )
+}
+
+const PHASE_META: Record<GazePhase, { label: string; color: string }> = {
+  calibrating: { label: 'Calibrating', color: '#FFD60A' },
+  driving: { label: 'Driving', color: '#2D6A4F' },
+  drowsy: { label: 'Drowsy', color: '#FF9F0A' },
+  alert: { label: 'Alert', color: '#FF453A' },
+  resolved: { label: 'Resolved', color: '#30D158' },
+}
+
+function ReadoutRow({ label, value, dot }: { label: string; value: string; dot?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: C.label3 }}>{label}</span>
+      <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: C.label }}>
+        {dot && <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, background: dot }} />}
+        {value}
+      </span>
+    </div>
+  )
+}
+
+const HORIZON_PCT = 42
+
+function RoadScene({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0" style={{
+        background: `linear-gradient(180deg, #BFE0F0 0%, #BFE0F0 ${HORIZON_PCT - 4}%, #E8D9B8 ${HORIZON_PCT}%, #E8D9B8 100%)`,
+      }} />
+      <div className="absolute inset-x-0 bottom-0" style={{ top: `${HORIZON_PCT}%`, background: '#38383c', clipPath: 'polygon(41% 0%, 59% 0%, 100% 100%, 0% 100%)' }}>
+        <div className="road-scroll absolute left-1/2 top-0 bottom-0" style={{
+          width: 4, marginLeft: -2,
+          backgroundImage: 'repeating-linear-gradient(180deg, #F4F3EE 0 18px, transparent 18px 36px)',
+        }} />
+        {ROAD_CARS.map((c, i) => <RoadCar key={i} {...c} />)}
       </div>
+      {children}
     </div>
   )
 }
 
 export function EyeGazeDemo() {
-  const boxRef = useRef<HTMLDivElement>(null)
-  const [offset, setOffset] = useState({ dx: 0, dy: 0 })
-  const [speed, setSpeed] = useState(0)
-  const last = useRef<{ x: number; y: number; t: number } | null>(null)
+  const [phase, setPhase] = useState<GazePhase>('calibrating')
+  const [gazeIndex, setGazeIndex] = useState(0)
+  const [closed, setClosed] = useState(0)
+  const [tilt, setTilt] = useState(0)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const schedule = (fn: () => void, ms: number) => {
+    timers.current.push(setTimeout(fn, ms))
+  }
+
+  const play = () => {
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+    setPhase('calibrating'); setGazeIndex(0); setClosed(0); setTilt(0)
+
+    schedule(() => setGazeIndex(1), 900)
+    schedule(() => setGazeIndex(2), 1800)
+    schedule(() => setGazeIndex(3), 2700)
+    schedule(() => setPhase('driving'), 3500)
+    schedule(() => { setPhase('drowsy'); setClosed(1); setTilt(9) }, 6200)
+    schedule(() => setPhase('alert'), 7900)
+    schedule(() => { setPhase('resolved'); setClosed(0); setTilt(0) }, 10200)
+    schedule(play, 13000) // loop forever, no button needed
+  }
 
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      const box = boxRef.current
-      if (!box) return
-      const r = box.getBoundingClientRect()
-      const cx = r.left + r.width / 2
-      const cy = r.top + r.height / 2
-      const ang = Math.atan2(e.clientY - cy, e.clientX - cx)
-      const dist = Math.min(Math.hypot(e.clientX - cx, e.clientY - cy) / 12, 15)
-      setOffset({ dx: Math.cos(ang) * dist, dy: Math.sin(ang) * dist })
-
-      const now = performance.now()
-      if (last.current) {
-        const dt = now - last.current.t
-        if (dt > 0) {
-          const v = Math.hypot(e.clientX - last.current.x, e.clientY - last.current.y) / dt
-          setSpeed(s => s * 0.8 + v * 0.2)
-        }
-      }
-      last.current = { x: e.clientX, y: e.clientY, t: now }
-    }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
+    play()
+    return () => timers.current.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const saccading = speed > 1.2
+  const calibrating = phase === 'calibrating'
+  const windshield = !calibrating
+  const target = GAZE_TARGETS[gazeIndex]
+  const faceDx = calibrating ? target.dx : 0
+  const faceDy = calibrating ? target.dy : 0
+  const arrowTarget = calibrating ? target : { x: 58, y: 60 }
+  const eyesClosed = closed > 0.5
+
+  const statusText = calibrating ? 'Logging gaze fixations on the monitor…'
+    : phase === 'driving' ? 'Screen → windshield. Eyes on the road.'
+    : phase === 'drowsy' ? 'Eyelids drooping…'
+    : phase === 'alert' ? 'Drowsiness detected — eyes closed.'
+    : 'Alert sent — driver responded.'
+
+  const gazeTargetText = eyesClosed ? '—' : calibrating ? target.label : 'Road ahead'
+  const meta = PHASE_META[phase]
 
   return (
-    <DemoShell title="Try it — gaze estimation">
-      <div ref={boxRef} className="flex flex-col items-center py-4">
-        <div className="flex gap-4 mb-4">
-          <Eye dx={offset.dx} dy={offset.dy} />
-          <Eye dx={offset.dx} dy={offset.dy} />
+    <DemoShell title="Try it — gaze & drowsiness detection">
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,340px)_1fr] gap-4 items-center">
+        {/* left — one picture: the road fills the frame, eyes as picture-in-picture */}
+        <div className="mx-auto w-full" style={{ maxWidth: 340 }}>
+          <div className={`relative w-full overflow-hidden transition-all duration-700 ${phase === 'alert' ? 'alert-shake' : ''}`}
+            style={{
+              aspectRatio: '16/9',
+              borderRadius: windshield ? 6 : 18,
+              border: `${windshield ? 3 : 10}px solid ${windshield ? '#1c1c1e' : '#3a3a3d'}`,
+              boxShadow: phase === 'alert' ? '0 0 0 4px rgba(255,69,58,0.35)' : 'none',
+            }}>
+            <RoadScene>
+              {calibrating && (
+                <div className="absolute rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    left: `${target.x}%`, top: `${target.y}%`, width: 14, height: 14,
+                    transform: 'translate(-50%,-50%)',
+                    border: '2px solid #FFD60A', boxShadow: '0 0 0 3px rgba(255,214,10,0.25)',
+                  }} />
+              )}
+            </RoadScene>
+
+            <GazeArrows target={arrowTarget} opacity={1 - closed} />
+
+            {/* eyes — picture-in-picture, tight to the frame's bottom-left corner */}
+            <div className="absolute rounded-md flex items-center overflow-hidden"
+              style={{ left: 6, bottom: 6, padding: '3px 4px', background: 'rgba(20,20,22,0.94)', border: '1px solid rgba(255,255,255,0.2)' }}>
+              <div style={{ transform: `rotate(${tilt}deg)`, transition: 'transform 0.6s ease' }}>
+                <FaceEyes dx={faceDx} dy={faceDy} closed={closed} />
+              </div>
+            </div>
+            <span className="absolute flex items-center gap-0.5 text-[7px] font-bold uppercase tracking-wide"
+              style={{ left: 8, bottom: 34, color: 'rgba(255,255,255,0.75)' }}>
+              <Camera size={7} /> {windshield ? 'dash cam' : 'face cam'}
+            </span>
+
+            {calibrating && (
+              <div className="absolute left-1/2 top-2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                style={{ background: 'rgba(0,0,0,0.55)', color: '#FFD60A' }}>
+                <Eye size={10} /> gaze → {target.label}
+              </div>
+            )}
+            {phase === 'alert' && (
+              <div className="absolute inset-x-2 top-2 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold text-white"
+                style={{ background: 'rgba(255,69,58,0.92)' }}>
+                <AlertTriangle size={13} /> Drowsiness detected — eyes closed
+              </div>
+            )}
+            {phase === 'resolved' && (
+              <div className="absolute inset-x-2 top-2 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold text-white"
+                style={{ background: 'rgba(48,209,88,0.92)' }}>
+                <CheckCircle2 size={13} /> Alert sent — driver responded
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full"
-          style={{
-            background: saccading ? '#FFF3E0' : C.forestBg,
-            color: saccading ? '#B45309' : C.forest,
-            transition: 'background 0.2s ease, color 0.2s ease',
-          }}>
-          <span className="w-1.5 h-1.5 rounded-full"
-            style={{ background: saccading ? '#F59E0B' : C.forestMid }} />
-          {saccading ? 'Saccade detected — rapid ballistic movement' : 'Fixation — gaze is steady'}
+
+        {/* right — structured live readout */}
+        <div className="rounded-xl p-3.5 flex flex-col gap-2.5" style={{ background: C.surface, border: `1px solid ${C.sep}` }}>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.label3 }}>Live readout</span>
+            <span className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: meta.color === '#FFD60A' ? '#B8860B' : meta.color }}>
+              <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, background: meta.color }} />
+              {meta.label}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <ReadoutRow label="Camera" value={windshield ? 'Dash cam' : 'Face cam'} />
+            <ReadoutRow label="Gaze target" value={gazeTargetText} />
+            <ReadoutRow label="Eye state" value={eyesClosed ? 'Closed' : 'Open'} dot={eyesClosed ? '#FF453A' : '#30D158'} />
+          </div>
+
+          <div className="h-px" style={{ background: C.sep }} />
+
+          <p className="text-[11px] font-semibold leading-relaxed" style={{ color: C.forestMid }}>
+            {statusText}
+          </p>
+          <p className="text-[11px] leading-relaxed" style={{ color: C.label3 }}>
+            My dissertation logged gaze like this from a monitor; Blueskeye’s automotive SDK runs the
+            same IR model on a dashboard camera to catch drowsy drivers in real time.
+          </p>
         </div>
-        <p className="text-[11px] mt-3 text-center max-w-xs" style={{ color: C.label3 }}>
-          Move your cursor — these eyes track it the way my IR-camera model tracked drivers’ gaze.
-          Move fast and you’ll trigger a saccade, the eye movement my dissertation measured.
-        </p>
       </div>
     </DemoShell>
   )
@@ -478,102 +675,246 @@ export function HealthLoopDemo() {
   )
 }
 
-// ─── 6. Dance Helper: beat trainer ────────────────────────────────────────────
+// ─── 6. Dance Helper: AI pose tracking ────────────────────────────────────────
+// Mirrors the real app's Vision-based skeleton: same 17 joints, same bone list
+// (see PoseOverlayVideoPlayer.swift) — red joints, green bones, on a dancing figure.
 
-export function BeatTapDemo() {
-  const [playing, setPlaying] = useState(false)
-  const [bpm, setBpm] = useState(100)
-  const [pulse, setPulse] = useState(false)
-  const [verdict, setVerdict] = useState<string | null>(null)
-  const audioCtx = useRef<AudioContext | null>(null)
-  const lastBeat = useRef(0)
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const bpmRef = useRef(bpm)
-  bpmRef.current = bpm
+type JointName =
+  | 'nose' | 'leftEye' | 'rightEye' | 'leftEar' | 'rightEar'
+  | 'leftShoulder' | 'rightShoulder' | 'leftElbow' | 'rightElbow'
+  | 'leftWrist' | 'rightWrist' | 'leftHip' | 'rightHip'
+  | 'leftKnee' | 'rightKnee' | 'leftAnkle' | 'rightAnkle'
 
-  const click = useCallback((accent = false) => {
-    try {
-      audioCtx.current ??= new AudioContext()
-      const ctx = audioCtx.current
-      if (ctx.state === 'suspended') ctx.resume()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.frequency.value = accent ? 1320 : 880
-      gain.gain.setValueAtTime(0.25, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(); osc.stop(ctx.currentTime + 0.08)
-    } catch { /* no audio available */ }
-  }, [])
+const JOINT_ORDER: JointName[] = [
+  'nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar',
+  'leftShoulder', 'rightShoulder', 'leftElbow', 'rightElbow',
+  'leftWrist', 'rightWrist', 'leftHip', 'rightHip',
+  'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle',
+]
 
-  const stop = useCallback(() => {
-    if (timer.current) clearInterval(timer.current)
-    timer.current = null
-    setPlaying(false); setPulse(false)
-  }, [])
+const SKELETON: [JointName, JointName][] = [
+  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'], ['rightEye', 'rightEar'],
+  ['leftShoulder', 'rightShoulder'], ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
+  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
+  ['leftShoulder', 'leftHip'], ['rightShoulder', 'rightHip'],
+  ['leftHip', 'rightHip'], ['leftHip', 'leftKnee'], ['leftKnee', 'leftAnkle'],
+  ['rightHip', 'rightKnee'], ['rightKnee', 'rightAnkle'],
+]
 
-  const start = useCallback(() => {
-    stop()
-    setPlaying(true); setVerdict(null)
-    const beat = () => {
-      lastBeat.current = performance.now()
-      setPulse(true)
-      click()
-      setTimeout(() => setPulse(false), 110)
-    }
-    beat()
-    timer.current = setInterval(beat, 60000 / bpmRef.current)
-  }, [click, stop])
+const BODY_SEGMENTS: [JointName, JointName][] = [
+  ['leftShoulder', 'rightShoulder'], ['leftShoulder', 'leftHip'], ['rightShoulder', 'rightHip'],
+  ['leftHip', 'rightHip'], ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
+  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
+  ['leftHip', 'leftKnee'], ['leftKnee', 'leftAnkle'], ['rightHip', 'rightKnee'], ['rightKnee', 'rightAnkle'],
+]
 
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
+function polar(cx: number, cy: number, angleDeg: number, len: number) {
+  const rad = (angleDeg * Math.PI) / 180
+  return { x: cx + Math.cos(rad) * len, y: cy + Math.sin(rad) * len }
+}
 
-  // restart interval when bpm changes mid-play
+// Procedural dance loop — bone lengths stay fixed, only joint angles move.
+function danceJoints(t: number): Record<JointName, { x: number; y: number }> {
+  const sway = Math.sin(t * 1.6) * 7
+  const bob = Math.abs(Math.sin(t * 1.6)) * 4
+
+  const leftShoulder = { x: 78 + sway, y: 66 - bob }
+  const rightShoulder = { x: 122 + sway, y: 66 - bob }
+  const leftHip = { x: 84 + sway * 0.7, y: 138 - bob * 0.5 }
+  const rightHip = { x: 116 + sway * 0.7, y: 138 - bob * 0.5 }
+
+  const lUpperAngle = 100 + 55 * Math.sin(t * 2.4)
+  const leftElbow = polar(leftShoulder.x, leftShoulder.y, lUpperAngle, 34)
+  const leftWrist = polar(leftElbow.x, leftElbow.y, lUpperAngle - 40 + 50 * Math.sin(t * 2.4 + 1.1), 30)
+
+  const rUpperAngle = 80 - 55 * Math.sin(t * 2.4)
+  const rightElbow = polar(rightShoulder.x, rightShoulder.y, rUpperAngle, 34)
+  const rightWrist = polar(rightElbow.x, rightElbow.y, rUpperAngle + 40 - 50 * Math.sin(t * 2.4 + 1.1), 30)
+
+  const lKneeAngle = 96 + 12 * Math.sin(t * 3.2)
+  const leftKnee = polar(leftHip.x, leftHip.y, lKneeAngle, 36)
+  const leftAnkle = polar(leftKnee.x, leftKnee.y, lKneeAngle + 6, 36)
+
+  const rKneeAngle = 84 - 12 * Math.sin(t * 3.2)
+  const rightKnee = polar(rightHip.x, rightHip.y, rKneeAngle, 36)
+  const rightAnkle = polar(rightKnee.x, rightKnee.y, rKneeAngle - 6, 36)
+
+  const nose = { x: (leftShoulder.x + rightShoulder.x) / 2, y: leftShoulder.y - 32 }
+  const leftEye = { x: nose.x - 4, y: nose.y - 2 }
+  const rightEye = { x: nose.x + 4, y: nose.y - 2 }
+  const leftEar = { x: nose.x - 9, y: nose.y }
+  const rightEar = { x: nose.x + 9, y: nose.y }
+
+  return {
+    nose, leftEye, rightEye, leftEar, rightEar,
+    leftShoulder, rightShoulder, leftElbow, rightElbow, leftWrist, rightWrist,
+    leftHip, rightHip, leftKnee, rightKnee, leftAnkle, rightAnkle,
+  }
+}
+
+// Reference dancer is the "ground truth" choreography. The learner drifts away
+// from it in cycles (arms/legs mainly — the joints that actually carry a dance
+// move) so the sync score has something real to react to.
+const DRIFT_WEIGHT: Partial<Record<JointName, number>> = {
+  leftWrist: 1.6, rightWrist: 1.6, leftElbow: 1.2, rightElbow: 1.2,
+  leftAnkle: 1.3, rightAnkle: 1.3, leftKnee: 1.1, rightKnee: 1.1,
+  leftShoulder: 0.8, rightShoulder: 0.8, leftHip: 0.8, rightHip: 0.8,
+}
+
+const JOINT_LABEL: Partial<Record<JointName, string>> = {
+  leftWrist: 'left arm', rightWrist: 'right arm', leftElbow: 'left arm', rightElbow: 'right arm',
+  leftAnkle: 'left leg', rightAnkle: 'right leg', leftKnee: 'left leg', rightKnee: 'right leg',
+  leftShoulder: 'left arm', rightShoulder: 'right arm', leftHip: 'hips', rightHip: 'hips',
+}
+
+function learnerJoints(t: number): Record<JointName, { x: number; y: number }> {
+  const base = danceJoints(t)
+  const envelope = (Math.sin(t * 0.5 - 1) + 1) / 2 // 0..1 — drifts in and out of sync
+  const jit = (seed: number) => Math.sin(t * 3.7 + seed) * 13 * envelope
+  return {
+    ...base,
+    leftWrist: { x: base.leftWrist.x + jit(1.3), y: base.leftWrist.y + jit(4.1) },
+    rightWrist: { x: base.rightWrist.x + jit(2.7), y: base.rightWrist.y + jit(5.9) },
+    leftElbow: { x: base.leftElbow.x + jit(0.6) * 0.5, y: base.leftElbow.y + jit(3.2) * 0.5 },
+    rightElbow: { x: base.rightElbow.x + jit(1.9) * 0.5, y: base.rightElbow.y + jit(6.4) * 0.5 },
+    leftAnkle: { x: base.leftAnkle.x + jit(7.1) * 0.5, y: base.leftAnkle.y },
+    rightAnkle: { x: base.rightAnkle.x + jit(8.8) * 0.5, y: base.rightAnkle.y },
+  }
+}
+
+function computeSync(ref: Record<JointName, { x: number; y: number }>, you: Record<JointName, { x: number; y: number }>) {
+  let totalW = 0, weightedErr = 0, worst: JointName = 'leftWrist', worstContribution = -1
+  for (const j of JOINT_ORDER) {
+    const w = DRIFT_WEIGHT[j] ?? 0.5
+    const d = Math.hypot(ref[j].x - you[j].x, ref[j].y - you[j].y)
+    weightedErr += d * w
+    totalW += w
+    if (d * w > worstContribution) { worstContribution = d * w; worst = j }
+  }
+  const score = Math.max(0, Math.min(100, Math.round(100 - (weightedErr / totalW) * 8)))
+  return { score, worst }
+}
+
+function PoseFigure({ joints, revealCount }: {
+  joints: Record<JointName, { x: number; y: number }>; revealCount: number
+}) {
+  const shown = new Set(JOINT_ORDER.slice(0, revealCount))
+  return (
+    <svg viewBox="0 0 200 230" width="100%" height="150" style={{ maxWidth: 130 }}>
+      <circle cx={joints.nose.x} cy={joints.nose.y - 13} r="13"
+        fill={C.forestBg2} stroke={C.forestMid} strokeWidth="2" opacity="0.9" />
+      {BODY_SEGMENTS.map(([a, b], i) => (
+        <line key={i} x1={joints[a].x} y1={joints[a].y} x2={joints[b].x} y2={joints[b].y}
+          stroke={C.forestBg2} strokeWidth="14" strokeLinecap="round" />
+      ))}
+      {SKELETON.map(([a, b], i) => (
+        shown.has(a) && shown.has(b) &&
+        <line key={i} x1={joints[a].x} y1={joints[a].y} x2={joints[b].x} y2={joints[b].y}
+          stroke="#30D158" strokeWidth="2" />
+      ))}
+      {JOINT_ORDER.map((j, i) => (
+        i < revealCount &&
+        <circle key={j} cx={joints[j].x} cy={joints[j].y} r="3.2" fill="#FF453A" />
+      ))}
+    </svg>
+  )
+}
+
+export function PoseDanceDemo() {
+  const [refJoints, setRefJoints] = useState(() => danceJoints(0))
+  const [youJoints, setYouJoints] = useState(() => learnerJoints(0))
+  const [phase, setPhase] = useState<'idle' | 'detecting' | 'comparing'>('idle')
+  const [revealed, setRevealed] = useState(0)
+  const [sync, setSync] = useState<{ score: number; worst: JointName }>({ score: 100, worst: 'leftWrist' })
+  const raf = useRef<number | null>(null)
+  const revealTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const phaseRef = useRef(phase)
+  phaseRef.current = phase
+
   useEffect(() => {
-    if (playing) start()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bpm])
+    const t0 = performance.now()
+    const tick = (now: number) => {
+      const t = (now - t0) / 1000
+      const ref = danceJoints(t)
+      const you = learnerJoints(t)
+      setRefJoints(ref)
+      setYouJoints(you)
+      if (phaseRef.current === 'comparing') setSync(computeSync(ref, you))
+      raf.current = requestAnimationFrame(tick)
+    }
+    raf.current = requestAnimationFrame(tick)
+    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
+  }, [])
 
-  const tap = () => {
-    if (!playing) return
-    const period = 60000 / bpm
-    const since = performance.now() - lastBeat.current
-    const off = Math.min(since, period - since) // distance to nearest beat
-    setVerdict(off < 70 ? '🎯 Perfect!' : off < 140 ? '👍 Close' : since < period / 2 ? '⏪ Late' : '⏩ Early')
+  useEffect(() => () => { if (revealTimer.current) clearInterval(revealTimer.current) }, [])
+
+  const startTracking = () => {
+    setPhase('detecting')
+    setRevealed(0)
+    if (revealTimer.current) clearInterval(revealTimer.current)
+    let n = 0
+    revealTimer.current = setInterval(() => {
+      n += 1
+      setRevealed(n)
+      if (n >= JOINT_ORDER.length) {
+        if (revealTimer.current) clearInterval(revealTimer.current)
+        setPhase('comparing')
+      }
+    }, 60)
   }
 
+  const reset = () => {
+    if (revealTimer.current) clearInterval(revealTimer.current)
+    setPhase('idle')
+    setRevealed(0)
+  }
+
+  const tracking = phase !== 'idle'
+  const scoreColor = sync.score >= 85 ? '#30D158' : sync.score >= 60 ? '#F59E0B' : '#FF453A'
+
   return (
-    <DemoShell title="Try it — beat trainer (sound on)">
-      <div className="flex flex-col items-center gap-4 py-2">
-        <button onClick={tap}
-          className="rounded-full flex items-center justify-center font-bold text-white select-none"
-          style={{
-            width: 96, height: 96,
-            background: `radial-gradient(circle at 35% 30%, ${C.forestMid}, ${C.forest})`,
-            transform: pulse ? 'scale(1.18)' : 'scale(1)',
-            boxShadow: pulse ? '0 0 0 14px rgba(45,106,79,0.18)' : '0 0 0 0 rgba(45,106,79,0)',
-            transition: 'transform 0.1s ease, box-shadow 0.25s ease',
-            fontSize: 13,
-          }}>
-          {playing ? 'TAP' : '♪'}
+    <DemoShell title="Try it — AI pose tracking">
+      <div className="flex flex-col items-center py-2">
+        <div className="flex items-start justify-center gap-4">
+          <div className="flex flex-col items-center">
+            <PoseFigure joints={refJoints} revealCount={JOINT_ORDER.length} />
+            <span className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: C.label3 }}>Reference</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <PoseFigure joints={youJoints} revealCount={phase === 'idle' ? 0 : revealed} />
+            <span className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: C.label3 }}>You</span>
+          </div>
+        </div>
+
+        <div className="w-full max-w-[280px] mt-3 h-9">
+          {phase === 'comparing' ? (
+            <>
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <span className="text-xs font-bold flex-shrink-0" style={{ color: scoreColor }}>{sync.score}% synced</span>
+                <span className="text-[11px] text-right truncate" style={{ color: C.label3 }}>
+                  {sync.score >= 90 ? '🎯 right on the beat' : `off on your ${JOINT_LABEL[sync.worst] ?? 'timing'}`}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.surface2 }}>
+                <div className="h-full rounded-full" style={{ width: `${sync.score}%`, background: scoreColor }} />
+              </div>
+            </>
+          ) : (
+            <div className="h-full flex items-center justify-center text-xs font-semibold" style={{ color: C.forestMid }}>
+              {phase === 'detecting' ? `Detecting joints… ${revealed}/${JOINT_ORDER.length}` : ''}
+            </div>
+          )}
+        </div>
+
+        <button onClick={tracking ? reset : startTracking}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white mt-1 transition-opacity hover:opacity-90"
+          style={{ background: C.forest }}>
+          {tracking ? <><RotateCcw size={11} /> Reset</> : <><Play size={11} /> Compare to reference</>}
         </button>
 
-        <div className="h-5 text-sm font-bold" style={{ color: C.forestMid }}>
-          {verdict ?? (playing ? 'Tap the circle on the beat' : '')}
-        </div>
-
-        <div className="flex items-center gap-3 w-full max-w-xs">
-          <button onClick={playing ? stop : start}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white flex-shrink-0 transition-opacity hover:opacity-90"
-            style={{ background: C.forest }}>
-            <Play size={11} /> {playing ? 'Stop' : 'Start'}
-          </button>
-          <input type="range" min={60} max={160} value={bpm}
-            onChange={e => setBpm(Number(e.target.value))}
-            className="flex-1 accent-[#2D6A4F]" />
-          <span className="text-xs font-mono w-14 text-right" style={{ color: C.label2 }}>{bpm} bpm</span>
-        </div>
-        <p className="text-[11px] text-center max-w-xs" style={{ color: C.label3 }}>
-          Dance Helper does this with real-time audio signal processing on any song — this is the toy version.
+        <p className="text-[11px] text-center max-w-xs mt-3" style={{ color: C.label3 }}>
+          Dance Helper tracks 17 body joints with Apple Vision, then scores your moves against a
+          reference video with weighted dynamic time warping — this is the toy version.
         </p>
       </div>
     </DemoShell>
@@ -652,15 +993,13 @@ const TRI_LEGS = [
 
 export function IronmanTracker() {
   const [hovered, setHovered] = useState<number | null>(null)
-  // race is in September — count down to the start of the month
-  const days = Math.max(0, Math.ceil((new Date(new Date().getFullYear(), 8, 1).getTime() - Date.now()) / 86400000))
 
   return (
     <div>
       <div className="flex justify-between items-baseline mb-3">
         <p className="text-sm font-bold" style={{ color: C.label }}>Half Ironman 70.3</p>
         <p className="text-xs font-mono" style={{ color: C.forestMid }}>
-          September · {days > 0 ? `~${days} days out` : 'race month! 🏁'}
+          Sept 2026 🏁
         </p>
       </div>
       <div className="flex h-9 rounded-xl overflow-hidden mb-2.5" style={{ border: `1px solid ${C.sep}` }}>
