@@ -9,7 +9,7 @@ import {
   Smartphone, MonitorSmartphone, Server, Terminal, KeyRound,
   Watch, Disc3, Palette, HeartHandshake, ArrowUpRight, UtensilsCrossed,
   Bot, Hammer, Footprints, Goal, Dumbbell, Music2, Music4,
-  Github, Menu, X, Store, Award, SquareKanban, Download,
+  Github, Menu, X, Store, Award, SquareKanban, Download, Gamepad2, Instagram,
 } from 'lucide-react'
 import { FaApple } from 'react-icons/fa'
 import { C } from '@/lib/palette'
@@ -811,11 +811,17 @@ function ProjectsSection() {
           </div>
         </div>
 
-        {/* Tinier Todo: open-source desktop app */}
-        <Reveal delay={80}>
-          <Card className="mt-4 overflow-hidden">
-            <div className="grid md:grid-cols-2 items-center">
-              <div className="p-6">
+        {/* Open-source desktop apps: half-width cards */}
+        <div className="grid md:grid-cols-2 gap-4 mt-4 items-stretch">
+          <Reveal delay={80}>
+            <Card className="overflow-hidden h-full flex flex-col">
+              <div className="p-4 pb-0">
+                <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden border" style={{ borderColor: C.surface2 }}>
+                  <Image src="/projects/tinier-todo.jpg" alt="Tinier Todo Kanban board" fill sizes="(min-width: 1024px) 26rem, 100vw"
+                    className="object-cover object-top" />
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-1">
                 <div className="flex items-center gap-3.5 mb-4">
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
                     style={{ background: C.forestBg, color: C.forestMid }}><SquareKanban size={22} /></div>
@@ -826,14 +832,13 @@ function ProjectsSection() {
                 </div>
                 <p className="text-sm leading-relaxed mb-4" style={{ color: C.label2 }}>
                   A small, fast Kanban desktop app with drag and drop, fuzzy search, dark mode and voice input.
-                  It runs a local MCP server, so AI assistants like Claude Code can read and update the board.
-                  Tickets are stored as plain JSON, with no account and no cloud.
+                  Its local MCP server lets AI assistants like Claude Code read and update the board.
                   GitHub Actions builds and releases it for all three platforms.
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {['Go', 'Wails', 'React', 'TypeScript', 'MCP', 'GitHub Actions'].map(t => <Chip key={t} label={t} />)}
                 </div>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-4 mt-auto">
                   <a href="https://github.com/RitvikJoshi97/Tinier-Todo" target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-bold hover:opacity-70 transition-opacity"
                     style={{ color: C.forest }}>
@@ -846,13 +851,49 @@ function ProjectsSection() {
                   </a>
                 </div>
               </div>
-              <div className="p-4 md:pl-0">
-                <Image src="/projects/tinier-todo.jpg" alt="Tinier Todo Kanban board" width={1200} height={759}
-                  className="w-full h-auto rounded-xl border" style={{ borderColor: C.surface2 }} />
+            </Card>
+          </Reveal>
+          <Reveal delay={160}>
+            <Card className="overflow-hidden h-full flex flex-col">
+              <div className="p-4 pb-0">
+                <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden border" style={{ borderColor: C.surface2 }}>
+                  <Image src="/projects/robbin-the-rich.jpg" alt="Robbin' The Rich gameplay" fill sizes="(min-width: 1024px) 26rem, 100vw"
+                    className="object-cover object-top" />
+                </div>
               </div>
-            </div>
-          </Card>
-        </Reveal>
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{ background: C.forestBg, color: C.forestMid }}><Gamepad2 size={22} /></div>
+                  <div>
+                    <h3 className="font-display text-base font-extrabold" style={{ color: C.label }}>Robbin&apos; The Rich</h3>
+                    <p className="text-xs font-bold" style={{ color: C.forest }}>Arcade game · macOS, Windows, Linux</p>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: C.label2 }}>
+                  A side-scrolling arcade game: Robin Hood fires arrows at fleeing billionaires, grabs the money
+                  they drop and dodges their lawsuits. Six levels, three difficulties and a leaderboard,
+                  packaged into installers for all three platforms by GitHub Actions.
+                </p>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {['Python', 'pygame', 'PyInstaller', 'GitHub Actions'].map(t => <Chip key={t} label={t} />)}
+                </div>
+                <div className="flex flex-wrap gap-4 mt-auto">
+                  <a href="https://github.com/RitvikJoshi97/robbin-the-rich" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold hover:opacity-70 transition-opacity"
+                    style={{ color: C.forest }}>
+                    <Github size={13} /> Source <ArrowUpRight size={11} />
+                  </a>
+                  <a href="https://github.com/RitvikJoshi97/robbin-the-rich/releases/latest" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold hover:opacity-70 transition-opacity"
+                    style={{ color: C.forest }}>
+                    <Download size={13} /> Download <ArrowUpRight size={11} />
+                  </a>
+                </div>
+              </div>
+            </Card>
+          </Reveal>
+        </div>
       </div>
     </section>
   )
@@ -983,6 +1024,11 @@ function BeyondSection() {
                 <p className="text-sm leading-relaxed" style={{ color: C.label2 }}>
                   Sketches and the odd painting. Different muscle to engineering — same urge to make things.
                 </p>
+                <a href="https://www.instagram.com/art_by_rit.joshi/" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold hover:opacity-70 transition-opacity"
+                  style={{ color: C.forest }}>
+                  <Instagram size={13} /> @art_by_rit.joshi <ArrowUpRight size={11} />
+                </a>
               </Card>
             </Reveal>
           </div>
